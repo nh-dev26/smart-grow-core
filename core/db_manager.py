@@ -11,7 +11,7 @@ def get_create_table_queries():
         CREATE TABLE IF NOT EXISTS layers (
             layer_id INTEGER PRIMARY KEY,
             layer_name TEXT NOT NULL,
-            cam_id TEXT NOT NULL,
+            cam_id INTEGER NOT NULL,
             is_active BOOLEAN NOT NULL
         );
         """,

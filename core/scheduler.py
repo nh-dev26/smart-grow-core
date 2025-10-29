@@ -101,16 +101,20 @@ def load_and_schedule_jobs():
                     max_instances=1 # ジョブが重複して実行されないようにする
                 )
                 
-                # ログ出力
-                if job_type in ['sensor', 'water']:
-                    # 間隔ジョブの場合は、CronTriggerの分フィールドを出力
-                    minute_field = str(trigger.fields[1])
-                    if '*' in minute_field:
-                        print(f"✓ スケジュール登録: [Layer {layer_id} / {job_type}] 毎時{minute_field.replace(',', '分と')}分に実行")
-                    else:
-                        print(f"✓ スケジュール登録: [Layer {layer_id} / {job_type}] 毎日 {exec_time[:5]} に実行")
 
+
+                if job_type in ['sensor', 'water']:
+                    # 間隔実行として登録した場合
+                    H, M, S = map(int, exec_time.split(':'))
+                    total_minutes = M + H * 60
+                    if total_minutes > 0 and 60 % total_minutes == 0:
+                        # 30分おきなどの「間隔」を明記
+                        print(f"✓ スケジュール登録: [Layer {layer_id} / {job_type}] 毎時 {total_minutes}分おきに実行 (Cron: 0,{total_minutes}...分)")
+                    else:
+                        # 固定時刻として登録した場合
+                        print(f"✓ スケジュール登録: [Layer {layer_id} / {job_type}] 毎日 {exec_time[:5]} に実行")
                 else:
+                    # カメラジョブ（固定時刻）
                     print(f"✓ スケジュール登録: [Layer {layer_id} / {job_type}] 毎日 {exec_time[:5]} に実行")
 
             except Exception as e:
