@@ -2,32 +2,9 @@ import sqlite3
 import os
 from datetime import datetime
 import json
+from config import *
 
-
-# TODO: 以下の定数をconfig.pyから読み込むように変更
-DB_PATH = 'smart_grow_system.db'
-
-DEFAULT_SYSTEM_CONFIG = {
-    "water_duration_sec": 10,
-    "slack_webhook_url": "",
-    "temp_alert_threshold": 30.0,
-    "pump_gpio_sig": 17, # 仮のGPIO番号
-    "dashboard_url": "http://your.funnel.url/dashboard",
-    "low_threshold": 20.0 # tank_statusの初期値
-}
-
-DEFAULT_LAYERS = [
-    (1, '1段目', '/dev/video0', 1), # layer_id, name, cam_id, is_active
-]
-
-DEFAULT_SCHEDULES = [
-    (0, 'water', '12:00:00', 1), # layer_id=0 はシステム全体のジョブ
-    (1, 'camera', '07:00:00', 1),
-]
-
-# --- 1. CREATE TABLE クエリの定義 ---
 def get_create_table_queries():
-    # 確定した6テーブル分のクエリを定義します
     return [
         # layers テーブル
         """
@@ -109,8 +86,12 @@ def get_create_table_queries():
         """
     ]
 
-# --- 2. 初期化関数 ---
 def init_db(db_path=DB_PATH):
+    """
+    データベースファイルが存在しない場合、初期化して必要なテーブルを作成し、デフォルト設定を挿入する。
+
+    :param db_path: データベースファイルのパス
+    """
     if not os.path.exists(db_path):
         print(f"データベース '{db_path}' を初期化中...")
         conn = None
@@ -254,6 +235,71 @@ def insert_system_log(layer_id: int, log_level: str, message: str, details: str 
         # このエラー自体をログに記録することはできないので、コンソールに出力
         print(f"致命的なエラー: System Log記録中にDBエラーが発生しました: {e}")
         
+    finally:
+        if conn:
+            conn.close()
+            
+def select_layer_info(layer_id: int):
+    """
+    指定された層 (layer_id) の設定情報を取得する。
+
+    :param layer_id: 取得したい層のID
+    :return: 層の設定を格納した辞書 (レコードが見つからない場合は None)
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # layer_idに基づいてlayersテーブルから情報を取得
+        cursor.execute("SELECT * FROM layers WHERE layer_id = ?", (layer_id,))
+        
+        # データベースからカラム名を取得
+        columns = [description[0] for description in cursor.description]
+        
+        # 結果を辞書形式で取得
+        result = cursor.fetchone()
+        
+        if result:
+            # カラム名と値を結合して辞書を返す
+            layer_info = dict(zip(columns, result))
+            return layer_info
+        else:
+            return None
+            
+    except sqlite3.Error as e:
+        print(f"層情報取得エラー: {e}")
+        # システムログは使えないため、コンソールに出力
+        return None
+    finally:
+        if conn:
+            conn.close()
+            
+    
+def select_schedules():
+    """
+    schedulesテーブルから有効な（is_enabled=1）ジョブスケジュールをすべて取得する。
+
+    :return: スケジュールレコードのリスト。各要素は辞書形式。
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        # 結果を辞書形式 (カラム名: 値) で取得できるように設定
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+
+        # is_enabled が 1 の（有効な）スケジュールのみを取得
+        cursor.execute("SELECT * FROM schedules WHERE is_enabled = 1")
+        
+        # 取得した行をすべて辞書に変換して返す
+        schedules = [dict(row) for row in cursor.fetchall()]
+        return schedules
+            
+    except sqlite3.Error as e:
+        print(f"スケジュール情報取得エラー: {e}")
+        # エラー発生時は空のリストを返す
+        return []
     finally:
         if conn:
             conn.close()

@@ -2,14 +2,8 @@ import cv2
 import datetime
 import os
 import glob
-from core.db_manager import insert_camera_log, insert_system_log 
-
-# TODO: config.pyから読み込むように変更
-IMAGE_WIDTH = 1280
-IMAGE_HEIGHT = 720
-RETENTION_DAYS = 90
-BASE_SAVE_DIR = "plant_images" 
-
+from core.db_manager import insert_camera_log, insert_system_log, select_layer_info
+from config import *
 
 def get_file_name():
     """ファイル名を生成（例: 20250910_100000.jpg）"""
@@ -50,9 +44,17 @@ def execute_photo_job(layer_id: int):
     # 1. 保存ディレクトリを作成
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
+
+    layer_info = select_layer_info(layer_id)
     
-    # 2. カメラの準備 (layersテーブルからcam_idを取得するロジックは後で追加)
-    camera_id = 0 # 仮のカメラID (Raspberry Piの最初のUSBカメラ)
+    if not layer_info:
+        error_msg = f"Layer {layer_id} の情報がDBに見つかりません。"
+        insert_system_log(layer_id, 'ERROR', error_msg, 'Layer ID not found in layers table.')
+        print(f"エラー: {error_msg}")
+        return
+        
+    camera_id = layer_info['cam_id'] # cam_id (例: '/dev/video0' または 0) を使用
+    
     cap = cv2.VideoCapture(camera_id)
 
     if not cap.isOpened():
@@ -81,16 +83,13 @@ def execute_photo_job(layer_id: int):
         
         insert_camera_log(layer_id, relative_file_path)
         
-        # 5. DBに成功を記録 (system_logs)
         insert_system_log(layer_id, 'INFO', 'Camera job finished successfully.', f'Path: {relative_file_path}')
         
-        # 6. 古い画像を削除
         delete_old_images(SAVE_DIR)
         
         print(f"[CAMERA JOB] Layer {layer_id} の画像を {relative_file_path} に保存しました。")
 
     except Exception as e:
-        # 予期せぬ実行時エラーを記録
         insert_system_log(layer_id, 'ERROR', 'Unexpected error during photo job.', str(e))
         print(f"[CRITICAL ERROR] Photo job failed: {e}")
     finally:
