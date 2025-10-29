@@ -1,15 +1,12 @@
-# core/db_manager.py
-
 import sqlite3
 import os
 from datetime import datetime
 import json
 
-# DBファイルのパスは config.py から読み込む想定ですが、ここでは仮で定義します
+
+# TODO: 以下の定数をconfig.pyから読み込むように変更
 DB_PATH = 'smart_grow_system.db'
 
-# --- config.py から読み込む想定のデフォルト値 ---
-# 初期データ投入に必要なため、config.pyがまだなくても、ここに一旦定義が必要です。
 DEFAULT_SYSTEM_CONFIG = {
     "water_duration_sec": 10,
     "slack_webhook_url": "",
@@ -106,7 +103,8 @@ def get_create_table_queries():
             timestamp TEXT NOT NULL,
             layer_id INTEGER NOT NULL,
             log_level TEXT NOT NULL,
-            message TEXT NOT NULL
+            message TEXT NOT NULL,
+            details TEXT
         );
         """
     ]
@@ -199,7 +197,34 @@ def insert_sensor_log(temperature: float, humidity: float, layer_id: int = 0):
     finally:
         if conn:
             conn.close()
-            
+
+
+def insert_camera_log(layer_id: int, image_path: str):
+    """ai_reports テーブルに画像パスと仮のAIデータを記録する。"""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        timestamp = datetime.now().isoformat()
+
+        # growth_rate, ai_summary は Webアプリ/AI機能が未実装のため仮の値 ('N/A')
+        cursor.execute(
+            """
+            INSERT INTO ai_reports (layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            # layer_idはデフォルト値を持たず、ジョブから渡される想定
+            (layer_id, timestamp, 0.0, 'N/A', '', image_path)
+        )
+        conn.commit()
+        
+    except sqlite3.Error as e:
+        print(f"カメラログ記録エラー: {e}")
+        # DBログ記録失敗自体は system_logs に記録できないため、コンソールに出力
+    finally:
+        if conn:
+            conn.close()
+               
             
 def insert_system_log(layer_id: int, log_level: str, message: str, details: str = None):
     """
