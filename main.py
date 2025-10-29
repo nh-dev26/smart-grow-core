@@ -2,7 +2,7 @@
 
 import sys
 from core.db_manager import init_db 
-# from core.scheduler import start_scheduler # スケジューラーは後で実装
+from core.scheduler import run_scheduler
 
 def main():
     # 1. データベースの確認と初期化を最優先で実行
@@ -13,8 +13,8 @@ def main():
     # scheduler.start()
 
     print("メインプロセスが起動しました。")
-    # 先行実装では、すぐに終了しても問題ありませんが、
-    # スケジューラが動く際は、ここでプログラムが終了しないように待機処理が必要です。
+    while True:
+        run_scheduler()
 
 if __name__ == '__main__':
     main()
