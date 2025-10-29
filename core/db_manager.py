@@ -151,7 +151,7 @@ def init_db(db_path=DB_PATH):
     else:
         print(f"データベース '{db_path}' は既に存在します。初期化をスキップしました。")
 
-def insert_sensor_log(temperature: float, humidity: float, layer_id: int = 0):
+def insert_sensor_log(layer_id: int, temperature: float, humidity: float):
     """
     温湿度センサの値をセンサーログテーブル (sensor_logs) にレコードを挿入する。
 

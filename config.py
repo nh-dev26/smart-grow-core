@@ -18,8 +18,8 @@ DEFAULT_LAYERS = [
 DEFAULT_SCHEDULES = [
     (0, 'water', '12:00:00', 1), # layer_id=0 はシステム全体のジョブ
     (0, 'sensor', '00:30:00', 1),
-    (1, 'camera', '09:00:00', 1)
-]
+    (1, 'camera', '09:00:00', 1),
+    ]
 
 # jobs/camera_jobs.py
 IMAGE_WIDTH = 1280
