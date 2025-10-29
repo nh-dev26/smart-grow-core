@@ -20,7 +20,7 @@ DEFAULT_SYSTEM_CONFIG = {
 }
 
 DEFAULT_LAYERS = [
-    (1, '上段', '/dev/video0', 1), # layer_id, name, cam_id, is_active
+    (1, '1段目', '/dev/video0', 1), # layer_id, name, cam_id, is_active
 ]
 
 DEFAULT_SCHEDULES = [
@@ -98,6 +98,16 @@ def get_create_table_queries():
             pressure_gpio_sig INTEGER NOT NULL,
             last_checked TEXT NOT NULL
         );
+        """,
+        # system_logs テーブル
+        """
+        CREATE TABLE IF NOT EXISTS system_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            layer_id INTEGER NOT NULL,
+            log_level TEXT NOT NULL,
+            message TEXT NOT NULL
+        );
         """
     ]
 
@@ -161,8 +171,14 @@ def init_db(db_path=DB_PATH):
     else:
         print(f"データベース '{db_path}' は既に存在します。初期化をスキップしました。")
 
-# --- 3. ログ記録関数（コア機能で必須） ---
-def insert_sensor_log(layer_id: int, temperature: float, humidity: float):
+def insert_sensor_log(temperature: float, humidity: float, layer_id: int = 0):
+    """
+    温湿度センサの値をセンサーログテーブル (sensor_logs) にレコードを挿入する。
+
+    :param layer_id: イベントが発生した層ID 
+    :param temperature: 測定された温度値
+    :param humidity: 測定された湿度値
+    """
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -180,6 +196,39 @@ def insert_sensor_log(layer_id: int, temperature: float, humidity: float):
         
     except sqlite3.Error as e:
         print(f"センサーログ記録エラー: {e}")
+    finally:
+        if conn:
+            conn.close()
+            
+            
+def insert_system_log(layer_id: int, log_level: str, message: str, details: str = None):
+    """
+    システムログテーブル (system_logs) にレコードを挿入する。
+
+    :param layer_id: イベントが発生した層ID (0: システム全体)
+    :param log_level: ログの重要度 ('INFO', 'ERROR'など)
+    :param message: ログの概要メッセージ
+    :param details: 詳細情報 (スタックトレースなど)
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        timestamp = datetime.now().isoformat()
+
+        cursor.execute(
+            """
+            INSERT INTO system_logs (timestamp, layer_id, log_level, message, details) 
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (timestamp, layer_id, log_level, message, details)
+        )
+        conn.commit()
+        
+    except sqlite3.Error as e:
+        # このエラー自体をログに記録することはできないので、コンソールに出力
+        print(f"致命的なエラー: System Log記録中にDBエラーが発生しました: {e}")
+        
     finally:
         if conn:
             conn.close()
