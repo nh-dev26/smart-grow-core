@@ -2,7 +2,7 @@ import cv2
 import datetime
 import os
 import glob
-from core.db_manager import insert_camera_log, insert_system_log, select_layer_info
+from database.db_manager import insert_camera_log, insert_system_log, select_layer_info
 from config import *
 
 def get_file_name():

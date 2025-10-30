@@ -1,5 +1,5 @@
 import sys
-from core.db_manager import init_db 
+from database.db_manager import init_db 
 from core.scheduler import run_scheduler
 
 def main():

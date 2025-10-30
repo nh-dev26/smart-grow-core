@@ -1,6 +1,6 @@
 import random
 import datetime
-from core.db_manager import insert_system_log, insert_sensor_log, select_system_config
+from database.db_manager import insert_system_log, insert_sensor_log, select_system_config
 from config import DEFAULT_SYSTEM_CONFIG # 閾値を取得するためにconfigもインポート
 
 def execute_sensor_job(layer_id: int):
