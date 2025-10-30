@@ -9,9 +9,14 @@ def execute_sensor_job(layer_id: int):
     物理センサがないため、ここではダミー値を使用する。
     """
     try:
-        # 実際のセンサ実装時はこの部分を置き換える
-        temperature = round(random.uniform(25.0, 32.0), 1)  # 25.0℃〜32.0℃の範囲
-        humidity = round(random.uniform(50.0, 75.0), 1)     # 50%〜75%の範囲
+        # TODO: aht25_reader内の関数を使用して実際のセンサデータを取得する
+        temperature = round(random.uniform(25.0, 32.0), 1) 
+        humidity = round(random.uniform(50.0, 75.0), 1)     
+
+
+
+
+
 
         insert_sensor_log(layer_id, temperature, humidity)
         
