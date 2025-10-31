@@ -21,6 +21,7 @@ def read_aht_sensor(i2c_bus_num=1):
     Returns:
         dict: {"temperature": T, "humidity": H} のデータ, または None
     """
+    simulate = False
     # --- 自動的にPCではsimulateモードにする ---
     if not SMBUS_AVAILABLE or platform.system() != "Linux":
         simulate = True
