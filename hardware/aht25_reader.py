@@ -1,8 +1,8 @@
-import smbus2
 import time
+import smbus2
 import errno # OSErrorのerrnoを扱うためにインポート
 from config import AHT_ADDRESS, AHT_TRIGGER_CMD, DEFAULT_I2C_BUS_NUM 
-
+    
 def read_aht_sensor(i2c_bus_num=1):
     """
     AHT25/AHT20センサーから温湿度データを1回取得し、辞書で返す。
@@ -13,6 +13,7 @@ def read_aht_sensor(i2c_bus_num=1):
     Returns:
         dict: {"temperature": T, "humidity": H} のデータ, または None
     """
+
     try:
         # I2Cバスに接続
         i2c = smbus2.SMBus(i2c_bus_num)

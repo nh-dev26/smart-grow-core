@@ -47,6 +47,7 @@ def get_create_table_queries():
             temp_low_threshold REAL NOT NULL,
             pump_gpio_sig INTEGER NOT NULL,
             dashboard_url TEXT,
+            i2c_bus_num INTEGER NOT NULL,
             last_modified TEXT NOT NULL
         );
         """,
@@ -124,10 +125,10 @@ def init_db(db_path=DB_PATH):
             cfg = DEFAULT_SYSTEM_CONFIG
             cursor.execute(
                 """
-                INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  pump_gpio_sig, dashboard_url, last_modified) 
+                INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  pump_gpio_sig, dashboard_url, i2c_bus_num, last_modified) 
                 VALUES (1, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], cfg['pump_gpio_sig'], cfg['dashboard_url'], now)
+                (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], cfg['pump_gpio_sig'], cfg['dashboard_url'],  cfg['i2c_bus_num'], now)
             )
 
             # (4) tank_status (初期は100%, Normal)
