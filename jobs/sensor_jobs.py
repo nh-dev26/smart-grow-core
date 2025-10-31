@@ -1,22 +1,47 @@
 import random
 import datetime
+import time
+import statistics
 from database.db_manager import insert_system_log, insert_sensor_log, select_system_config
-from config import DEFAULT_SYSTEM_CONFIG # 閾値を取得するためにconfigもインポート
+from config import DEFAULT_SYSTEM_CONFIG # 閾値を取得するため
+from hardware.aht25_reader import read_aht_sensor
 
-def execute_sensor_job(layer_id: int):
+def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float = 1.0):
     """
     指定された層 (layer_id) の温湿度データを読み込み、DBに記録し、アラートをチェックする。
     物理センサがないため、ここではダミー値を使用する。
     """
     try:
-        # TODO: aht25_reader内の関数を使用して実際のセンサデータを取得する
-        temperature = round(random.uniform(25.0, 32.0), 1) 
-        humidity = round(random.uniform(50.0, 75.0), 1)     
+        temps = []
+        hums = []
+    
+        # 1. I2Cバス番号を取得 (config.py または DBから取得する関数を想定)
+        # ここでは、設定値をDBから取得する関数 `read_aht_sensor_config` を仮定します。
+        # 実際の値は、プロジェクトに合わせて実装してください。
+        # 🚨 DB初期化後、system_configからI2Cバス番号を取得するようにしてください 🚨
+        i2c_bus = 1 # 仮の値。実際はDBから読み込みます。  
 
+        print(f"[SENSOR JOB] センサー値の {num_readings} 回測定を開始...")
+        for i in range(num_readings):
+            data = read_aht_sensor(i2c_bus) 
+            
+            if data:
+                temps.append(data['temperature'])
+                hums.append(data['humidity'])
+            else:
+                # 取得失敗時も、ログを記録して続行
+                insert_system_log(layer_id, 'WARNING', 'Failed to read sensor data.', f'Attempt {i+1} failed.')
+            
+            time.sleep(sleep_time)
+            
+        if not temps or not hums:
+            error_msg = "センサーから有効な値を一度も取得できませんでした。"
+            insert_system_log(layer_id, 'ERROR', error_msg, 'All sensor readings failed or returned None.')
+            print(f"[SENSOR JOB - ERROR] {error_msg}")
+            return
 
-
-
-
+        temperature = statistics.mean(temps)
+        humidity = statistics.mean(hums)
 
         insert_sensor_log(layer_id, temperature, humidity)
         

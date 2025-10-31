@@ -8,7 +8,8 @@ DEFAULT_SYSTEM_CONFIG = {
     "temp_low_threshold": 10.0,# 低温音アラート閾値　仮設定
     "pump_gpio_sig": 17, # 仮のGPIO番号
     "dashboard_url": "http://your.funnel.url/dashboard",
-    "low_threshold": 20.0 # tank_statusの初期値
+    "low_threshold": 20.0, # tank_statusの初期値
+    "i2c_bus_num": 1 # AHTセンサーのI2Cバス番号デフォルト
 }
 
 DEFAULT_LAYERS = [
@@ -21,8 +22,15 @@ DEFAULT_SCHEDULES = [
     (1, 'camera', '09:00:00', 1),
 ]
 
+# hardware/aht25_reader.py
+DEFAULT_I2C_BUS_NUM = 1
+
 # jobs/camera_jobs.py
 IMAGE_WIDTH = 1280
 IMAGE_HEIGHT = 720
 RETENTION_DAYS = 90
 BASE_SAVE_DIR = "plant_images" 
+
+# hardware/aht25_reader.py
+AHT_ADDRESS = 0x38
+AHT_TRIGGER_CMD = [0xAC, 0x33, 0x00]
