@@ -1,6 +1,14 @@
 import time
-import smbus2
 import errno # OSErrorのerrnoを扱うためにインポート
+import platform
+
+# --- smbus2を安全にインポート ---
+try:
+    import smbus2
+    SMBUS_AVAILABLE = True
+except ImportError:
+    SMBUS_AVAILABLE = False
+
 from config import AHT_ADDRESS, AHT_TRIGGER_CMD
     
 def read_aht_sensor(i2c_bus_num=1):
@@ -13,6 +21,14 @@ def read_aht_sensor(i2c_bus_num=1):
     Returns:
         dict: {"temperature": T, "humidity": H} のデータ, または None
     """
+    # --- 自動的にPCではsimulateモードにする ---
+    if not SMBUS_AVAILABLE or platform.system() != "Linux":
+        simulate = True
+
+    if simulate:
+        # ダミーデータ（安定動作確認用）
+        print("AHT Sensor Simulation Mode: 実機ではありません。")
+        return {"temperature": 23.5, "humidity": 45.2}
 
     try:
         # I2Cバスに接続
