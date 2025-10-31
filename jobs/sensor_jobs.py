@@ -48,8 +48,8 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
             print(f"[SENSOR JOB - ERROR] {error_msg}")
             return
 
-        temperature = statistics.mean(temps)
-        humidity = statistics.mean(hums)
+        temperature = round(statistics.mean(temps), 2)
+        humidity = round(statistics.mean(hums), 2)
 
         insert_sensor_log(layer_id, temperature, humidity)
         
