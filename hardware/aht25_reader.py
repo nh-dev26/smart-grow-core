@@ -1,7 +1,7 @@
 import smbus2
 import time
 import errno # OSErrorのerrnoを扱うためにインポート
-from config import AHT_ADDRESS, AHT_TRIGGER_CMD
+from config import AHT_ADDRESS, AHT_TRIGGER_CMD, DEFAULT_I2C_BUS_NUM 
 
 def read_aht_sensor(i2c_bus_num=1):
     """
