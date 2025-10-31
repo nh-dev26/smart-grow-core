@@ -49,7 +49,11 @@ def execute_photo_job(layer_id: int):
     
     if not layer_info:
         error_msg = f"Layer {layer_id} の情報がDBに見つかりません。"
-        insert_system_log(layer_id, 'ERROR', error_msg, 'Layer ID not found in layers table.')
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='ERROR', 
+            message=error_msg, 
+            details='Layer ID not found in layers table.')
         print(f"エラー: {error_msg}")
         return
         
@@ -59,7 +63,11 @@ def execute_photo_job(layer_id: int):
 
     if not cap.isOpened():
         error_msg = f"カメラ(ID:{camera_id})接続失敗。"
-        insert_system_log(layer_id, 'ERROR', error_msg, f'VideoCapture({camera_id}) failed to open.')
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='ERROR', 
+            message=error_msg, 
+            details=f'VideoCapture({camera_id}) failed to open.')
         print(f"エラー: {error_msg}")
         return
 
@@ -72,7 +80,11 @@ def execute_photo_job(layer_id: int):
 
         if not ret:
             error_msg = f"Layer {layer_id} のフレーム読み込み失敗。"
-            insert_system_log(layer_id, 'ERROR', error_msg, 'cap.read() returned False.')
+            insert_system_log(
+                layer_id=layer_id, 
+                log_level='ERROR', 
+                message=error_msg, 
+                details='cap.read() returned False.')
             print(f"エラー: {error_msg}")
             return
         
@@ -83,14 +95,22 @@ def execute_photo_job(layer_id: int):
         
         insert_camera_log(layer_id, relative_file_path)
         
-        insert_system_log(layer_id, 'INFO', 'Camera job finished successfully.', f'Path: {relative_file_path}')
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='INFO', 
+            message='Camera job finished successfully.', 
+            details=f'Path: {relative_file_path}')
         
         delete_old_images(SAVE_DIR)
         
         print(f"[CAMERA JOB] Layer {layer_id} の画像を {relative_file_path} に保存しました。")
 
     except Exception as e:
-        insert_system_log(layer_id, 'ERROR', 'Unexpected error during photo job.', str(e))
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='ERROR', 
+            message='Unexpected error during photo job.', 
+            details=str(e))
         print(f"[CRITICAL ERROR] Photo job failed: {e}")
     finally:
         if cap.isOpened():

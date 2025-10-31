@@ -28,13 +28,23 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
                 hums.append(data['humidity'])
             else:
                 # 取得失敗時も、ログを記録して続行
-                insert_system_log(layer_id, 'WARNING', 'Failed to read sensor data.', f'Attempt {i+1} failed.')
+                insert_system_log(
+                    layer_id=layer_id, 
+                    log_level='WARNING', 
+                    message='Failed to read sensor data.', 
+                    details=f'Attempt {i+1} failed.'
+                )
             
             time.sleep(sleep_time)
             
         if not temps or not hums:
             error_msg = "センサーから有効な値を一度も取得できませんでした。"
-            insert_system_log(layer_id, 'ERROR', error_msg, 'All sensor readings failed or returned None.')
+            insert_system_log(
+                layer_id=layer_id, 
+                log_level='ERROR', 
+                message=error_msg, 
+                details='All sensor readings failed or returned None.'
+            )
             print(f"[SENSOR JOB - ERROR] {error_msg}")
             return
 
@@ -53,18 +63,34 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
         if temperature > temp_high_threshold:
             # 高温アラート
             alert_msg = f"温度アラート: {temperature}℃ (高温閾値 {temp_high_threshold}℃ 超過)"
-            insert_system_log(layer_id, 'CRITICAL', alert_msg, f'Current temp: {temperature}')
+            insert_system_log(
+                layer_id=layer_id, 
+                log_level='CRITICAL', 
+                message=alert_msg, 
+                details=f'Current temp: {temperature}')
             print(f"[SENSOR JOB - CRITICAL ALERT] {alert_msg}")
         
         elif temperature < temp_low_threshold:
             # 【追加】低温アラート
             alert_msg = f"温度アラート: {temperature}℃ (低温閾値 {temp_low_threshold}℃ 未満)"
-            insert_system_log(layer_id, 'CRITICAL', alert_msg, f'Current temp: {temperature}')
+            insert_system_log(
+                layer_id=layer_id, 
+                log_level='CRITICAL', 
+                message=alert_msg, 
+                details=f'Current temp: {temperature}')
             print(f"[SENSOR JOB - CRITICAL ALERT] {alert_msg}")
          
-        insert_system_log(layer_id, 'INFO', 'Sensor data recorded successfully.', f'Temp: {temperature}℃, Hum: {humidity}%')
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='INFO', 
+            message='Sensor data recorded successfully.', 
+            details=f'Temp: {temperature}℃, Hum: {humidity}%')
         print(f"[SENSOR JOB] Layer {layer_id} のデータを記録しました。 (温: {temperature}℃, 湿: {humidity}%)")
 
     except Exception as e:
-        insert_system_log(layer_id, 'ERROR', 'Unexpected error during sensor job.', str(e))
+        insert_system_log(
+            layer_id=layer_id, 
+            log_level='ERROR', 
+            message='Unexpected error during sensor job.', 
+            details=str(e))
         print(f"[CRITICAL ERROR] Sensor job failed: {e}")

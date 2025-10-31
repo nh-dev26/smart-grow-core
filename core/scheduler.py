@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import time
 import sys
-from database.db_manager import select_schedules
+from database.db_manager import select_schedules, insert_system_log
 from jobs.camera_jobs import execute_photo_job
 from jobs.sensor_jobs import execute_sensor_job
 from jobs.pump_jobs import execute_pump_job 
@@ -132,6 +132,13 @@ def run_scheduler():
     if not scheduler.running:
         scheduler.start()
         print("APSchedulerが起動しました。")
+        # スケジュール開始ログを記録
+        insert_system_log(
+            layer_id=0,                                     # システム全体を示す
+            log_level='INFO', 
+            message='Scheduler Started',                    
+            details='APScheduler main loop initiated successfully.' 
+        )
 
     # メインスレッドを維持する。ジョブはバックグラウンドで実行される。
     try:
