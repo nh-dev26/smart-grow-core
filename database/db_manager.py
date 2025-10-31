@@ -126,7 +126,7 @@ def init_db(db_path=DB_PATH):
             cursor.execute(
                 """
                 INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  pump_gpio_sig, dashboard_url, i2c_bus_num, last_modified) 
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], cfg['pump_gpio_sig'], cfg['dashboard_url'],  cfg['i2c_bus_num'], now)
             )

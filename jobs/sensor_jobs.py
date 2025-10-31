@@ -15,9 +15,7 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
         temps = []
         hums = []
     
-        # 1. I2Cバス番号を取得 (config.py または DBから取得する関数を想定)
-        # ここでは、設定値をDBから取得する関数 `read_aht_sensor_config` を仮定します。
-        # 実際の値は、プロジェクトに合わせて実装してください。
+        # 1. I2Cバス番号を取得 (DBから取得する関数を想定)
         # 🚨 DB初期化後、system_configからI2Cバス番号を取得するようにしてください 🚨
         i2c_bus = 1 # 仮の値。実際はDBから読み込みます。  
 
