@@ -26,7 +26,7 @@ def get_create_table_queries():
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
-        # sensor_logs テーブル
+      # sensor_logs テーブル
         """
         CREATE TABLE IF NOT EXISTS sensor_logs (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +34,8 @@ def get_create_table_queries():
             timestamp TEXT NOT NULL,
             temperature REAL,
             humidity REAL,
+            supply_pressure REAL,  
+            drain_pressure REAL,    
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
@@ -152,13 +154,16 @@ def init_db(db_path=DB_PATH):
     else:
         print(f"データベース '{db_path}' は既に存在します。初期化をスキップしました。")
 
-def insert_sensor_log(layer_id: int, temperature: float, humidity: float):
+def insert_sensor_log(layer_id: int, temperature: float | None = None, humidity: float | None = None, supply_pressure: float | None = None, drain_pressure: float | None = None):
     """
-    温湿度センサの値をセンサーログテーブル (sensor_logs) にレコードを挿入する。
+    温湿度・水圧センサの値を統合し、センサーログテーブル (sensor_logs) にレコードを挿入する。
+    データ欠損がある場合はNone（DB上ではNULL）として記録する。
 
-    :param layer_id: イベントが発生した層ID 
-    :param temperature: 測定された温度値
-    :param humidity: 測定された湿度値
+    :param layer_id: イベントが発生した層ID。
+    :param temperature: 測定された温度値 (℃)。欠損時はNone。
+    :param humidity: 測定された湿度値 (%)。欠損時はNone。
+    :param supply_pressure: 給水タンクの水圧/水位 (None可)。
+    :param drain_pressure: 排水タンクの水圧/水位 (None可)。
     """
     conn = None
     try:
@@ -168,10 +173,10 @@ def insert_sensor_log(layer_id: int, temperature: float, humidity: float):
 
         cursor.execute(
             """
-            INSERT INTO sensor_logs (layer_id, timestamp, temperature, humidity) 
-            VALUES (?, ?, ?, ?)
+            INSERT INTO sensor_logs (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure) 
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (layer_id, timestamp, temperature, humidity)
+            (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure)
         )
         conn.commit()
         
