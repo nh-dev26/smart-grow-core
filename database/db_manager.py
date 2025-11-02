@@ -237,3 +237,13 @@ def select_system_config():
                     # 変換失敗時（通常発生しないが安全のため）
                     config[k] = v
         return config
+    
+def get_latest_tank_status(layer_id):
+    with open_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT supply_pressure, drain_pressure, timestamp FROM sensor_logs WHERE layer_id=? ORDER BY timestamp DESC LIMIT 1",
+            (layer_id,)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
