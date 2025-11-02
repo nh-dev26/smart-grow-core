@@ -50,6 +50,8 @@ def get_create_table_queries():
             pump_gpio_sig INTEGER NOT NULL,
             dashboard_url TEXT,
             i2c_bus_num INTEGER NOT NULL,
+            supply_low_threshold REAL,   -- 給水タンクが少なくなったときの閾値
+            drain_high_threshold REAL,   -- 排水タンクが多すぎるときの閾値
             last_modified TEXT NOT NULL
         );
         """,
@@ -127,10 +129,13 @@ def init_db(db_path=DB_PATH):
             cfg = DEFAULT_SYSTEM_CONFIG
             cursor.execute(
                 """
-                INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  pump_gpio_sig, dashboard_url, i2c_bus_num, last_modified) 
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  
+                pump_gpio_sig, dashboard_url, i2c_bus_num, supply_low_threshold, drain_high_threshold, last_modified) 
+                
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], cfg['pump_gpio_sig'], cfg['dashboard_url'],  cfg['i2c_bus_num'], now)
+                (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], 
+                 cfg['pump_gpio_sig'], cfg['dashboard_url'],  cfg['i2c_bus_num'], cfg['supply_low_threshold'],  cfg['drain_high_threshold'], now)
             )
 
             # (4) tank_status (初期は100%, Normal)

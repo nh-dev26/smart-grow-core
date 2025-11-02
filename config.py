@@ -9,7 +9,9 @@ DEFAULT_SYSTEM_CONFIG = {
     "pump_gpio_sig": 17, # 仮のGPIO番号
     "dashboard_url": "http://your.funnel.url/dashboard",
     "low_threshold": 20.0, # tank_statusの初期値
-    "i2c_bus_num": 1 # AHTセンサーのI2Cバス番号デフォルト
+    "i2c_bus_num": 1, # AHTセンサーのI2Cバス番号デフォルト
+    "supply_low_threshold": 90.0,    # 仮値
+    "drain_high_threshold": 150.0   # 仮値
 }
 
 DEFAULT_LAYERS = [
