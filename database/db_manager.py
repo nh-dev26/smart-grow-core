@@ -6,10 +6,13 @@ from contextlib import contextmanager
 from config import * # DB_PATH, DEFAULT_LAYERS, DEFAULT_SCHEDULES, DEFAULT_SYSTEM_CONFIG をインポート
 
 @contextmanager
-def open_db(db_path=DB_PATH):
+def open_db(db_path=None):
     """
     データベース接続を開き、コンテキストを抜けるときにコミット/ロールバック/クローズを行う共通関数。
     """
+    if db_path is None:
+        db_path = DB_PATH
+        
     conn = None
     try:
         conn = sqlite3.connect(db_path)
@@ -18,13 +21,17 @@ def open_db(db_path=DB_PATH):
         yield conn
         # 処理が成功した場合にコミット
         conn.commit()
+        
     except sqlite3.Error as e:
         print(f"DBエラー: {e}")
+        with open("db_error.log", "a") as f:
+            f.write(f"[{datetime.now()}] {e}\n")
         if conn:
             # エラー発生時にロールバック
             conn.rollback()
         # エラーを再送出
         raise
+        
     finally:
         if conn:
             # 接続を閉じる
@@ -92,12 +99,17 @@ def get_create_table_queries():
         """
         CREATE TABLE IF NOT EXISTS ai_reports (
             report_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            layer_id INTEGER,
-            timestamp TEXT NOT NULL,
-            growth_rate REAL NOT NULL,
-            ai_summary TEXT NOT NULL,
-            ai_advice TEXT,
-            image_path TEXT NOT NULL,
+            layer_id INTEGER NOT NULL,
+            timestamp TEXT NOT NULL,                 -- 撮影時刻
+            image_path TEXT NOT NULL,                -- 解析対象の画像パス
+            growth_rate REAL,                        -- 成長率（AI出力）
+            ai_summary TEXT,                         -- AIによる要約
+            ai_advice TEXT,                          -- AIによるアドバイス
+            json_response TEXT,                      -- 元のAIレスポンス（JSON丸ごと保存）
+            slack_sent INTEGER DEFAULT 0,            -- Slack通知済みフラグ（0:未送信, 1:送信済み）
+            error_log TEXT,                          -- AIやSlack通知時のエラーログ（任意）
+            llm_model_name TEXT,                     -- 使用したモデル（例: gpt-4-turbo）
+            last_updated TEXT NOT NULL,              -- 最終更新日時
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
@@ -174,14 +186,19 @@ def insert_sensor_log(layer_id, temperature=None, humidity=None, supply_pressure
 
 def insert_camera_log(layer_id, image_path):
     """
-    カメラ撮影情報を ai_reports テーブルに記録する。
+    カメラ撮影後にAI解析に前段階として画像パスを含むレポートの器を作成する
     """
     timestamp = datetime.now().isoformat()
     with open_db() as conn:
         conn.execute(
-            "INSERT INTO ai_reports (layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path) VALUES (?, ?, ?, ?, ?, ?)",
-            (layer_id, timestamp, 0.0, 'N/A', '', image_path)
+            """
+            INSERT INTO ai_reports (
+                layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path, json_response, slack_sent, llm_model_name, last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (layer_id, timestamp, 0.0, 'N/A', '', image_path, '{}', 0, 'gpt-4-turbo', timestamp)
         )
+
 
 def insert_system_log(layer_id, log_level, message, details=None):
     """
