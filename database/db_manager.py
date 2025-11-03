@@ -130,6 +130,11 @@ def init_db(db_path=DB_PATH):
     """
     データベースが存在しない場合に作成・初期化し、デフォルト値を挿入する。
     """
+    # 本番運用を想定し、意図しない再初期化を防止
+    if os.environ.get("APP_ENV") == "production" and os.path.exists(db_path):
+        print(f"本番環境のため、既存のDB {db_path} の初期化はスキップされました。")
+        return
+
     if not os.path.exists(db_path):
         print(f"初期化中: {db_path}")
         with open_db(db_path) as conn:
