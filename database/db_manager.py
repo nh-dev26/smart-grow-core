@@ -1,10 +1,46 @@
 import sqlite3
 import os
 from datetime import datetime
-import json
-from config import *
+from contextlib import contextmanager
+
+from config import * # DB_PATH, DEFAULT_LAYERS, DEFAULT_SCHEDULES, DEFAULT_SYSTEM_CONFIG をインポート
+
+@contextmanager
+def open_db(db_path=None):
+    """
+    データベース接続を開き、コンテキストを抜けるときにコミット/ロールバック/クローズを行う共通関数。
+    """
+    if db_path is None:
+        db_path = DB_PATH
+        
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        # カラム名でアクセスできるように設定
+        conn.row_factory = sqlite3.Row
+        yield conn
+        # 処理が成功した場合にコミット
+        conn.commit()
+        
+    except sqlite3.Error as e:
+        print(f"DBエラー: {e}")
+        with open("db_error.log", "a") as f:
+            f.write(f"[{datetime.now()}] {e}\n")
+        if conn:
+            # エラー発生時にロールバック
+            conn.rollback()
+        # エラーを再送出
+        raise
+        
+    finally:
+        if conn:
+            # 接続を閉じる
+            conn.close()
 
 def get_create_table_queries():
+    """
+    データベース初期化のためのテーブル作成クエリリストを返す。
+    """
     return [
         # layers テーブル
         """
@@ -26,7 +62,7 @@ def get_create_table_queries():
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
-      # sensor_logs テーブル
+        # sensor_logs テーブル (温湿度と水圧の時系列ログ)
         """
         CREATE TABLE IF NOT EXISTS sensor_logs (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,12 +70,12 @@ def get_create_table_queries():
             timestamp TEXT NOT NULL,
             temperature REAL,
             humidity REAL,
-            supply_pressure REAL,  
-            drain_pressure REAL,    
+            supply_pressure REAL,
+            drain_pressure REAL,
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
-        # system_config テーブル
+        # system_config テーブル (各種設定と閾値、GPIOピン)
         """
         CREATE TABLE IF NOT EXISTS system_config (
             config_id INTEGER PRIMARY KEY,
@@ -50,6 +86,12 @@ def get_create_table_queries():
             pump_gpio_sig INTEGER NOT NULL,
             dashboard_url TEXT,
             i2c_bus_num INTEGER NOT NULL,
+            supply_low_threshold REAL,
+            drain_high_threshold REAL,
+            supply_pressure_gpio_sig INTEGER,
+            drain_pressure_gpio_sig INTEGER,
+            llm_api_key_enc TEXT,
+            llm_model_name TEXT,
             last_modified TEXT NOT NULL
         );
         """,
@@ -57,27 +99,21 @@ def get_create_table_queries():
         """
         CREATE TABLE IF NOT EXISTS ai_reports (
             report_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            layer_id INTEGER,
-            timestamp TEXT NOT NULL,
-            growth_rate REAL NOT NULL,
-            ai_summary TEXT NOT NULL,
-            ai_advice TEXT,
-            image_path TEXT NOT NULL,
+            layer_id INTEGER NOT NULL,
+            timestamp TEXT NOT NULL,                 -- 撮影時刻
+            image_path TEXT NOT NULL,                -- 解析対象の画像パス
+            growth_rate REAL,                        -- 成長率（AI出力）
+            ai_summary TEXT,                         -- AIによる要約
+            ai_advice TEXT,                          -- AIによるアドバイス
+            json_response TEXT,                      -- 元のAIレスポンス（JSON丸ごと保存）
+            slack_sent INTEGER DEFAULT 0,            -- Slack通知済みフラグ（0:未送信, 1:送信済み）
+            error_log TEXT,                          -- AIやSlack通知時のエラーログ（任意）
+            llm_model_name TEXT,                     -- 使用したモデル（例: gpt-4-turbo）
+            last_updated TEXT NOT NULL,              -- 最終更新日時
             FOREIGN KEY (layer_id) REFERENCES layers (layer_id)
         );
         """,
-        # tank_status テーブル
-        """
-        CREATE TABLE IF NOT EXISTS tank_status (
-            tank_id INTEGER PRIMARY KEY,
-            percentage REAL NOT NULL,
-            status TEXT NOT NULL,
-            low_threshold REAL NOT NULL,
-            pressure_gpio_sig INTEGER NOT NULL,
-            last_checked TEXT NOT NULL
-        );
-        """,
-        # system_logs テーブル
+        # system_logs テーブル (システムの動作ログやアラート)
         """
         CREATE TABLE IF NOT EXISTS system_logs (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,271 +128,144 @@ def get_create_table_queries():
 
 def init_db(db_path=DB_PATH):
     """
-    データベースファイルが存在しない場合、初期化して必要なテーブルを作成し、デフォルト設定を挿入する。
-
-    :param db_path: データベースファイルのパス
+    データベースが存在しない場合に作成・初期化し、デフォルト値を挿入する。
     """
-    if not os.path.exists(db_path):
-        print(f"データベース '{db_path}' を初期化中...")
-        conn = None
-        try:
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
+    # 本番運用を想定し、意図しない再初期化を防止
+    if os.environ.get("APP_ENV") == "production" and os.path.exists(db_path):
+        print(f"本番環境のため、既存のDB {db_path} の初期化はスキップされました。")
+        return
 
-            # A. 全テーブルを作成
+    if not os.path.exists(db_path):
+        print(f"初期化中: {db_path}")
+        with open_db(db_path) as conn:
+            cursor = conn.cursor()
+            
+            # 1. テーブル作成
             for query in get_create_table_queries():
                 cursor.execute(query)
-            
-            # B. デフォルトデータ挿入
-            # layers, schedules, system_config, tank_status の初期レコードを挿入
-            
-            # (1) layers
+
+            # 2. デフォルトデータ挿入
             cursor.executemany(
                 "INSERT INTO layers (layer_id, layer_name, cam_id, is_active) VALUES (?, ?, ?, ?)",
                 DEFAULT_LAYERS
             )
-
-            # (2) schedules
             cursor.executemany(
                 "INSERT INTO schedules (layer_id, job_type, exec_time, is_enabled) VALUES (?, ?, ?, ?)",
                 DEFAULT_SCHEDULES
             )
 
-            # (3) system_config
             now = datetime.now().isoformat()
             cfg = DEFAULT_SYSTEM_CONFIG
+            
+            # system_config 挿入
             cursor.execute(
                 """
-                INSERT INTO system_config (config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,  pump_gpio_sig, dashboard_url, i2c_bus_num, last_modified) 
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO system_config (
+                    config_id, water_duration_sec, slack_webhook_url, temp_high_threshold, temp_low_threshold,
+                    pump_gpio_sig, dashboard_url, i2c_bus_num, supply_low_threshold, drain_high_threshold,
+                    supply_pressure_gpio_sig, drain_pressure_gpio_sig, llm_api_key_enc, llm_model_name, last_modified
+                ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'], cfg['pump_gpio_sig'], cfg['dashboard_url'],  cfg['i2c_bus_num'], now)
+                (
+                    cfg['water_duration_sec'], cfg['slack_webhook_url'], cfg['temp_high_threshold'], cfg['temp_low_threshold'],
+                    cfg['pump_gpio_sig'], cfg['dashboard_url'], cfg['i2c_bus_num'], cfg['supply_low_threshold'],
+                    cfg['drain_high_threshold'], cfg['supply_pressure_gpio_sig'], cfg['drain_pressure_gpio_sig'],
+                    cfg['llm_api_key_enc'], cfg['llm_model_name'], now
+                )
             )
 
-            # (4) tank_status (初期は100%, Normal)
-            cursor.execute(
-                """
-                INSERT INTO tank_status (tank_id, percentage, status, low_threshold, pressure_gpio_sig, last_checked) 
-                VALUES (1, 100.0, 'Normal', ?, ?, ?)
-                """,
-                (cfg['low_threshold'], 27, now) # 仮のGPIO番号27
-            )
-
-            conn.commit()
-            print("初期化とデフォルト設定の挿入が完了しました。")
-            
-        except sqlite3.Error as e:
-            print(f"データベース初期化エラー: {e}")
-            
-        finally:
-            if conn:
-                conn.close()
+            print("初期化完了")
     else:
-        print(f"データベース '{db_path}' は既に存在します。初期化をスキップしました。")
+        print(f"{db_path} は既に存在します")
 
-def insert_sensor_log(layer_id: int, temperature: float | None = None, humidity: float | None = None, supply_pressure: float | None = None, drain_pressure: float | None = None):
+def insert_sensor_log(layer_id, temperature=None, humidity=None, supply_pressure=None, drain_pressure=None):
     """
-    温湿度・水圧センサの値を統合し、センサーログテーブル (sensor_logs) にレコードを挿入する。
-    データ欠損がある場合はNone（DB上ではNULL）として記録する。
-
-    :param layer_id: イベントが発生した層ID。
-    :param temperature: 測定された温度値 (℃)。欠損時はNone。
-    :param humidity: 測定された湿度値 (%)。欠損時はNone。
-    :param supply_pressure: 給水タンクの水圧/水位 (None可)。
-    :param drain_pressure: 排水タンクの水圧/水位 (None可)。
+    温湿度と水圧のデータを sensor_logs テーブルに記録する。
     """
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        timestamp = datetime.now().isoformat()
-
-        cursor.execute(
-            """
-            INSERT INTO sensor_logs (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
+    timestamp = datetime.now().isoformat()
+    with open_db() as conn:
+        conn.execute(
+            "INSERT INTO sensor_logs (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure) VALUES (?, ?, ?, ?, ?, ?)",
             (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure)
         )
-        conn.commit()
-        
-    except sqlite3.Error as e:
-        print(f"センサーログ記録エラー: {e}")
-    finally:
-        if conn:
-            conn.close()
 
-
-def insert_camera_log(layer_id: int, image_path: str):
-    """ai_reports テーブルに画像パスと仮のAIデータを記録する。"""
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        timestamp = datetime.now().isoformat()
-
-        # growth_rate, ai_summary は Webアプリ/AI機能が未実装のため仮の値 ('N/A')
-        cursor.execute(
+def insert_camera_log(layer_id, image_path):
+    """
+    カメラ撮影後にAI解析に前段階として画像パスを含むレポートの器を作成する
+    """
+    timestamp = datetime.now().isoformat()
+    with open_db() as conn:
+        conn.execute(
             """
-            INSERT INTO ai_reports (layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO ai_reports (
+                layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path, json_response, slack_sent, llm_model_name, last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            # layer_idはデフォルト値を持たず、ジョブから渡される想定
-            (layer_id, timestamp, 0.0, 'N/A', '', image_path)
+            (layer_id, timestamp, 0.0, 'N/A', '', image_path, '{}', 0, 'gpt-4-turbo', timestamp)
         )
-        conn.commit()
-        
-    except sqlite3.Error as e:
-        print(f"カメラログ記録エラー: {e}")
-        # DBログ記録失敗自体は system_logs に記録できないため、コンソールに出力
-    finally:
-        if conn:
-            conn.close()
-               
-            
-def insert_system_log(layer_id: int, log_level: str, message: str, details: str = None):
-    """
-    システムログテーブル (system_logs) にレコードを挿入する。
 
-    :param layer_id: イベントが発生した層ID (0: システム全体)
-    :param log_level: ログの重要度 ('INFO', 'ERROR'など)
-    :param message: ログの概要メッセージ
-    :param details: 詳細情報 (スタックトレースなど)
-    """
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        timestamp = datetime.now().isoformat()
 
-        cursor.execute(
-            """
-            INSERT INTO system_logs (timestamp, layer_id, log_level, message, details) 
-            VALUES (?, ?, ?, ?, ?)
-            """,
+def insert_system_log(layer_id, log_level, message, details=None):
+    """
+    システムの動作ログやアラートを system_logs テーブルに記録する。
+    """
+    timestamp = datetime.now().isoformat()
+    with open_db() as conn:
+        conn.execute(
+            "INSERT INTO system_logs (timestamp, layer_id, log_level, message, details) VALUES (?, ?, ?, ?, ?)",
             (timestamp, layer_id, log_level, message, details)
         )
-        conn.commit()
-        
-    except sqlite3.Error as e:
-        # このエラー自体をログに記録することはできないので、コンソールに出力
-        print(f"致命的なエラー: System Log記録中にDBエラーが発生しました: {e}")
-        
-    finally:
-        if conn:
-            conn.close()
-            
-def select_layer_info(layer_id: int):
-    """
-    指定された層 (layer_id) の設定情報を取得する。
 
-    :param layer_id: 取得したい層のID
-    :return: 層の設定を格納した辞書 (レコードが見つからない場合は None)
+def select_layer_info(layer_id):
     """
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
+    指定された layer_id の情報を取得する。
+    """
+    with open_db() as conn:
         cursor = conn.cursor()
-        
-        # layer_idに基づいてlayersテーブルから情報を取得
         cursor.execute("SELECT * FROM layers WHERE layer_id = ?", (layer_id,))
-        
-        # データベースからカラム名を取得
-        columns = [description[0] for description in cursor.description]
-        
-        # 結果を辞書形式で取得
-        result = cursor.fetchone()
-        
-        if result:
-            # カラム名と値を結合して辞書を返す
-            layer_info = dict(zip(columns, result))
-            return layer_info
-        else:
-            return None
-            
-    except sqlite3.Error as e:
-        print(f"層情報取得エラー: {e}")
-        # システムログは使えないため、コンソールに出力
-        return None
-    finally:
-        if conn:
-            conn.close()
-            
-    
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
 def select_schedules():
     """
-    schedulesテーブルから有効な（is_enabled=1）ジョブスケジュールをすべて取得する。
-
-    :return: スケジュールレコードのリスト。各要素は辞書形式。
+    有効なスケジュール情報をすべて取得する。
     """
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        # 結果を辞書形式 (カラム名: 値) で取得できるように設定
-        conn.row_factory = sqlite3.Row 
+    with open_db() as conn:
         cursor = conn.cursor()
-
-        # is_enabled が 1 の（有効な）スケジュールのみを取得
         cursor.execute("SELECT * FROM schedules WHERE is_enabled = 1")
-        
-        # 取得した行をすべて辞書に変換して返す
-        schedules = [dict(row) for row in cursor.fetchall()]
-        return schedules
-            
-    except sqlite3.Error as e:
-        print(f"スケジュール情報取得エラー: {e}")
-        # エラー発生時は空のリストを返す
-        return []
-    finally:
-        if conn:
-            conn.close()
-            
-            
+        return [dict(row) for row in cursor.fetchall()]
+
 def select_system_config():
     """
-    system_config テーブルの全設定を取得し、{カラム名: 値} の辞書形式で返す。
-    
-    :return: {設定名: 値} の辞書
+    システム設定を system_config テーブルから取得し、辞書として返す。
     """
-    conn = None
     config = {}
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        # 結果を辞書形式で取得できるように設定
-        conn.row_factory = sqlite3.Row 
+    with open_db() as conn:
         cursor = conn.cursor()
-        
-        # テーブル全体を取得 (config_id=1の行のみを想定)
         cursor.execute("SELECT * FROM system_config WHERE config_id = 1")
-        
         row = cursor.fetchone()
         
         if row:
-            # カラム名と値を結合して辞書を構築
-            temp_config = dict(row)
-            
-            # 値を適切な型に変換して格納
-            for name, value in temp_config.items():
-                if name == 'config_id':
-                    continue # IDは除外
-                    
-                # DBから取得した値を float/int に変換を試みる
+            # sqlite3.Row オブジェクトを辞書に変換し、数値型を適切に変換
+            for k, v in dict(row).items():
+                if k == 'config_id': continue
                 try:
-                    # 浮動小数点数か数字のみの文字列をチェック
-                    if isinstance(value, str) and ('.' in value or value.isdigit()):
-                        if '.' in value:
-                            config[name] = float(value)
-                        else:
-                            config[name] = int(value)
+                    # 文字列が数値（整数または浮動小数点数）のように見える場合、型変換を試みる
+                    if isinstance(v, str) and (v.replace('.', '', 1).isdigit() or (v.startswith('-') and v[1:].replace('.', '', 1).isdigit())):
+                        config[k] = float(v) if '.' in v else int(v)
                     else:
-                        config[name] = value # 文字列など、そのまま格納
+                        config[k] = v
                 except ValueError:
-                    config[name] = value
-                
-    except sqlite3.Error as e:
-        print(f"システム設定読み込みエラー: {e}")
-    finally:
-        if conn:
-            conn.close()
-            
-    return config
+                    # 変換失敗時（通常発生しないが安全のため）
+                    config[k] = v
+        return config
+    
+def get_latest_tank_status(layer_id):
+    with open_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT supply_pressure, drain_pressure, timestamp FROM sensor_logs WHERE layer_id=? ORDER BY timestamp DESC LIMIT 1",
+            (layer_id,)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
