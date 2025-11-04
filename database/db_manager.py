@@ -275,6 +275,6 @@ def select_i2c_bus_num():
     """
     system_config テーブルから I2C バス番号を取得する。
     """
-    system_config = select_system_config()
-    i2c_bus = system_config.get('i2c_bus_num', 1) if system_config else 1
+    system_config = select_system_config() or {}
+    i2c_bus = system_config.get('i2c_bus_num', 1)
     return i2c_bus

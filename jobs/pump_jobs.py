@@ -25,7 +25,7 @@ def execute_pump_job(layer_id: int, duration: int = 5):
 
     config = select_system_config() or {}
     pump_pin = config.get("pump_gpio_pin", 17) 
-
+    
     if not GPIO_AVAILABLE:
         print("[INFO] GPIOライブラリが利用できない環境です。ダミーモードで動作します。")
         print("[DUMMY] 5秒間ポンプON → OFF（実際の制御は行われません）")
