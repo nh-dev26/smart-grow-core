@@ -2,7 +2,7 @@ import random
 import datetime
 import time
 import statistics
-from database.db_manager import insert_system_log, insert_sensor_log, select_system_config
+from database.db_manager import insert_system_log, insert_sensor_log, select_system_config, select_i2c_bus_num
 from config import DEFAULT_SYSTEM_CONFIG # 閾値を取得するため
 from hardware.sensor_readers import read_aht_sensor, read_supply_pressure, read_drain_pressure
 
@@ -17,10 +17,8 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
         supply_pressures = []
         drain_pressures = []
         
-        # TODO:DB(system_configテーブル)からI2Cバス番号を取得するように修正
-        # 1. I2Cバス番号を取得
-        i2c_bus = 1 # 仮の値。実際はDBから読み込みます。  
-
+        i2c_bus = select_i2c_bus_num()
+      
         print(f"[SENSOR JOB] センサー値の {num_readings} 回測定を開始...")
         for i in range(num_readings):
             data = read_aht_sensor(i2c_bus) 
