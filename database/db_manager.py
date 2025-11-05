@@ -119,7 +119,7 @@ def get_create_table_queries():
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
             layer_id INTEGER NOT NULL,
-            log_level TEXT NOT NULL,
+            log_level TEXT NOT NULL, --INFO, WARNING, ERROR, CRITICAL
             message TEXT NOT NULL,
             details TEXT
         );
