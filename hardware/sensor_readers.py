@@ -81,22 +81,35 @@ def read_aht_sensor(i2c_bus_num=1):
     
 def read_pressure_sensor(sim_name: str) -> float | None:
     """
-    水圧センサー（水位）のダミー値を返す。5回に1回は読み取りエラーをシミュレートする。
-    
+    水圧センサー（MS5837）のダミー値を返す。10回に1回は読み取りエラーをシミュレートする。
+    単位は MS5837 ライブラリのデフォルトに合わせ「mbar (ミリバール)」とする。
+
     :param sim_name: センサーの識別名 ('Supply' または 'Drain')
-    :return: 圧力値 (float) または None (読み取り失敗時)
+    :return: 圧力値 (mbar, float) または None (読み取り失敗時)
     """
-    # 20%の確率でNoneを返し、読み取りエラーをシミュレート
-    if random.randint(1, 5) == 5:
+    # --- 将来、本物のセンサーを接続する場合 例---
+    # if SMBUS_AVAILABLE and platform.system() == "Linux":
+    #     try:
+    #         # import ms5837
+    #         # sensor = ms5837.MS5837_30BA() # モデルに合わせて選択
+    #         # if not sensor.init():
+    #         #     print("Sensor could not be initialized")
+    #         #     return None
+    #         # sensor.read()
+    #         # return round(sensor.pressure(), 2) # mbar
+    #     except Exception as e:
+    #         print(f"{sim_name} Pressure Sensor Error: {e}")
+    #         return None
+
+    # --- 以下はダミーモードの動作 ---
+    # 10%の確率でNoneを返し、読み取りエラーをシミュレート
+    if random.randint(1, 10) == 1:
         print(f"{sim_name} Pressure Sensor Simulation: 読み取りエラー（Noneを返します）")
         return None
     
-    # 圧力のダミー値（例: 50.0 kPa 〜 150.0 kPa 程度の範囲で変動）
-    # 実際は水位に応じてパーセンテージやkPaを返す
-    dummy_value = random.uniform(50.0, 150.0)
-    #print(f"{sim_name} Pressure Sensor Simulation: {dummy_value:.2f} kPa")
-    
-    return round(dummy_value, 2)
+    # ダミー値: 圧力は1013mbar(空)〜1062mbar(満タン)の範囲、水温は18〜25℃の範囲
+    dummy_pressure = random.uniform(1013.0, 1062.0)
+    return round(dummy_pressure, 2)
 
 def read_supply_pressure() -> float | None:
     """
