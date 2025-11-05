@@ -261,6 +261,9 @@ def select_system_config():
         return config
     
 def get_latest_tank_status(layer_id):
+    """
+    最新の給水圧と排水圧のログを取得する。
+    """
     with open_db() as conn:
         cursor = conn.cursor()
         cursor.execute(

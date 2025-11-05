@@ -30,15 +30,15 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
                 temps.append(data['temperature'])
                 hums.append(data['humidity'])
             
-            # 💡 NEW: 給水圧
+            # 給水圧
             if supply_pressure is not None:
                 supply_pressures.append(supply_pressure)
             
-            # 💡 NEW: 排水圧
+            # 排水圧
             if drain_pressure is not None:
                 drain_pressures.append(drain_pressure)
                 
-            # 💡 警告ログの調整: いずれかの取得失敗時はシステムログに記録
+            #  警告ログ: いずれかの取得失敗時はシステムログに記録
             if not data or supply_pressure is None or drain_pressure is None:
                 failure_details = []
                 if not data: failure_details.append("AHT")
@@ -80,7 +80,7 @@ def execute_sensor_job(layer_id: int, num_readings: int = 5, sleep_time: float =
             print(f"[SENSOR JOB - CRITICAL ALERT] {alert_msg}")
         
         elif temperature < temp_low_threshold:
-            # 【追加】低温アラート
+            # 低温アラート
             alert_msg = f"温度アラート: {temperature}℃ (低温閾値 {temp_low_threshold}℃ 未満)"
             insert_system_log(
                 layer_id=layer_id, 

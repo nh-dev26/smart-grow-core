@@ -53,6 +53,10 @@ IMAGE_HEIGHT = 720
 RETENTION_DAYS = 90
 BASE_SAVE_DIR = "plant_images"
 
-# === AHT25 センサー設定 ===
+# === AHT25センサーI2C設定 ===
 AHT_ADDRESS = 0x38
 AHT_TRIGGER_CMD = [0xAC, 0x33, 0x00]
+
+# === 水圧センサI2Cセンサー設定 ===
+SUPPLY_PRESSURE_SENSOR_ADDR = 0x76  # MS5837（給水タンク）
+DRAIN_PRESSURE_SENSOR_ADDR = 0x77  # MS5837（排水タンク）
