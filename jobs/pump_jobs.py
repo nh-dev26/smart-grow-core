@@ -14,6 +14,7 @@ def execute_pump_job(layer_id: int):
     """
     水ポンプ制御ジョブ。
     指定された層(layer_id)のポンプを一定時間ONにしてOFFにする。
+    リレーモジュール AE-G5V-DRV を使用
     """
     # TODO:水圧センサ水完成後安全確認ロジックを追加 （給水、排水タンクの確認）
     # 例:
@@ -51,7 +52,7 @@ def execute_pump_job(layer_id: int):
     pump = None
     
     try:
-        pump = OutputDevice(pump_pin, active_high=False, initial_value=True)
+        pump = OutputDevice(pump_pin, active_high=False, initial_value=False)
         # ポンプをON（リレーLOW出力）
         pump.off()
         print(f"[WATER JOB] ポンプを {duration} 秒間動作させます。")
