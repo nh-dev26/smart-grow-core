@@ -1,5 +1,6 @@
 import cv2
 import datetime
+from time import sleep
 import os
 import glob
 from database.db_manager import insert_camera_log, insert_system_log, select_layer_info
@@ -58,6 +59,14 @@ def execute_photo_job(layer_id: int):
         return
         
     camera_id = layer_info['cam_id'] # cam_id (例: '/dev/video0' または 0) を使用
+    
+    # 撮影前のディレイ処理
+    # layer_id が 1 なら 0秒、2なら 2秒、3なら 4秒待つ (2秒間隔)
+    delay_sec = (layer_id - 1) * 2 
+    
+    if delay_sec > 0:
+        print(f"[{datetime.now()}] [CAMERA JOB] Layer {layer_id} は、リソース競合を避けるため {delay_sec} 秒待機します。")
+        sleep(delay_sec)
     
     cap = cv2.VideoCapture(camera_id)
 
