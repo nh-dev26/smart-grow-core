@@ -60,3 +60,7 @@ AHT_TRIGGER_CMD = [0xAC, 0x33, 0x00]
 # === 水圧センサI2Cセンサー設定 ===
 SUPPLY_PRESSURE_SENSOR_ADDR = 0x76  # MS5837（給水タンク）
 DRAIN_PRESSURE_SENSOR_ADDR = 0x77  # MS5837（排水タンク）
+
+# === スケジュール再読み込み間隔（分） ===
+#SCHEDULE_RELOAD_INTERVAL = 1  # 開発時
+SCHEDULE_RELOAD_INTERVAL = 5  # 本番時
