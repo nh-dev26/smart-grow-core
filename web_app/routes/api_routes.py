@@ -1,32 +1,22 @@
-# smart-grow-core/web_app/routes/api_routes.py
+# web_api_bp/routes/api_routes.py
 
-from flask import Blueprint, jsonify, request
-# requests は不要になります
-from database.db_manager import get_latest_tank_status, select_schedules
+from flask import Blueprint, jsonify
+from .. import services
 
-api_bp = Blueprint('api_bp', __name__, url_prefix='/api')
+# Blueprintを定義。URLプレフィックスは '/api' に設定
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-@api_bp.route('/status', methods=['GET'])
-def get_current_status():
+@api_bp.route('/dashboard-data', methods=['GET'])
+def dashboard_data():
     """
-    データベースから最新の状態を取得する。
-    これにより、コア機能の稼働状態に依存しなくなる。
+    JSの updateDashboard 関数が呼び出すエンドポイント
+    servicesモジュールからデータを取得し、JSON形式で返す
     """
     try:
-        # 例として、最新のタンク状態とスケジュールを取得
-        # 複数の層がある場合は、リクエストから layer_id を受け取る
-        layer_id = request.args.get('layer_id', 1, type=int)
-        
-        latest_status = get_latest_tank_status(layer_id)
-        schedules = select_schedules()
-        
-        return jsonify({
-            "latest_status": latest_status,
-            "schedules": schedules
-        })
+        data = services.get_dashboard_data()
+        return jsonify(data)
     except Exception as e:
-        return jsonify({"error": "Failed to fetch status from database", "details": str(e)}), 500
+        # エラー処理。実際にはloggingモジュールで詳細を記録すべき
+        return jsonify({"success": False, "error": str(e)}), 500
 
-# 手動制御などのAPIも、直接ハードウェアを叩くのではなく、
-# DBに「手動実行フラグ」を立て、コア機能がそれを検知して実行する、
-# という形にすると、より疎結合になります。
+

@@ -1,21 +1,27 @@
-# smart-grow-core/web_app/__init__.py
+# web_app/__init__.py
 
 from flask import Flask
 
-# Blueprintをインポート
-from .routes.ui_routes import ui_bp
-from .routes.api_routes import api_bp
+def create_app(config_object='config'):
+    """
+    Flaskアプリケーションのインスタンスを生成するファクトリ関数
+    """
+    app = Flask('web_app', 
+                template_folder='templates',
+                static_folder='static')
+    
+    # config.py から設定を読み込む（プロジェクトのconfig.pyを想定）
+    app.config.from_object(config_object) 
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object('config') # config.pyの設定を読み込む
-    
-    # テンプレートと静的ファイルの場所を設定（web_appディレクトリ内を参照させる）
-    app.template_folder = 'templates'
-    app.static_folder = 'static'
-    
     # ルーティングを登録
+    from .routes.ui_routes import ui_bp
+    from .routes.api_routes import api_bp
+    
     app.register_blueprint(ui_bp)
-    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(api_bp)
+
+    # 必要な拡張機能（DBなど）をここで初期化・登録
 
     return app
+
+

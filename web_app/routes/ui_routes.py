@@ -1,19 +1,42 @@
-# smart-grow-core/web_app/routes/ui_routes.py
+# web_app/routes/ui_routes.py
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
-ui_bp = Blueprint('ui_bp', __name__)
+# Blueprintを定義。UIルートは通常、URLプレフィックスなし
+ui_bp = Blueprint('ui', __name__)
 
 @ui_bp.route('/')
-@ui_bp.route('/dashboard')
 def dashboard():
-    """ダッシュボード画面。APIからデータを取得し、Jinja2でレンダリング"""
-    # ここで services.py を通してデータを取得
-    status_data = {"temp": 25.0, "pump_status": "ON"} # 例: services.get_status()
-    return render_template('dashboard.html', data=status_data)
+    """ダッシュボード画面"""
+    return render_template('dashboard.html')
+
+@ui_bp.route('/sensors')
+def sensors():
+    """センサーグラフ画面"""
+    return render_template('sensors.html')
+
+@ui_bp.route('/gallery')
+def gallery():
+    """画像ギャラリー画面"""
+    return render_template('gallery.html')
+
+@ui_bp.route('/ai-reports')
+def ai_reports():
+    """AI相談チャット画面"""
+    return render_template('ai_chat.html')
+
+@ui_bp.route('/schedules')
+def schedules():
+    """スケジュール管理画面"""
+    return render_template('schedules.html')
+
+@ui_bp.route('/settings')
+def settings():
+    """システム設定画面"""
+    return render_template('settings.html')
 
 @ui_bp.route('/logs')
 def logs():
-    """ログ履歴画面。DBからログデータを取得"""
-    # logs = services.get_historical_logs() # 例
-    return render_template('logs.html', logs=[])
+    """システムログ画面"""
+    return render_template('logs.html')
+
