@@ -1,0 +1,99 @@
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.calendar-day.empty {
+    background-color: #f8f9fa;
+    cursor: default;
+}
+
+.calendar-day.empty:hover {
+    transform: none;
+}
+
+.calendar-day.has-images {
+    background-color: #d1e7dd;
+    border-color: #198754;
+}
+
+.calendar-day.has-images:hover {
+    background-color: #badbcc;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.image-count {
+    font-size: 0.9rem;
+    color: #198754;
+    margin-top: 5px;
+}
+
+.calendar-day.today {
+    border: 2px solid #198754;
+    box-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
+}
+
+/* モバイル対応 */
+@media (max-width: 576px) {
+    .calendar-day {
+        padding: 5px;
+    }
+    
+    .day-number {
+        font-size: 0.9rem;
+    }
+    
+    .image-count {
+        font-size: 0.75rem;
+    }
+}
+
+/* サムネイル */
+.thumbnail-img {
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-radius: 5px;
+}
+
+.thumbnail-img:hover {
+    transform: scale(1.05);
+}

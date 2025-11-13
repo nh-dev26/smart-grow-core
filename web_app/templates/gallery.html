@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}画像ギャラリー - Smart Grow System{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6">
+                <i class="fas fa-images text-success"></i> 画像ギャラリー
+            </h1>
+            <p class="text-muted">撮影した植物の画像をカレンダー表示</p>
+        </div>
+    </div>
+
+    <!-- フィルター -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 mb-2">
+            <div class="btn-group w-100" role="group">
+                <button type="button" class="btn btn-outline-success" onclick="changeMonth(-1)">
+                    <i class="fas fa-chevron-left"></i> 前月
+                </button>
+                <button type="button" class="btn btn-success" id="current-month-btn" disabled>
+                    <span id="current-month-text">読み込み中...</span>
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="changeMonth(1)">
+                    次月 <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 mb-2">
+            <select class="form-select" id="layer-select" onchange="loadGallery()">
+                <option value="1">Layer 1</option>
+                <!-- 他のレイヤーは必要に応じて追加 -->
+            </select>
+        </div>
+    </div>
+
+    <!-- カレンダー -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <!-- 曜日ヘッダー -->
+                    <div class="calendar-header">
+                        <div class="calendar-day-header">日</div>
+                        <div class="calendar-day-header">月</div>
+                        <div class="calendar-day-header">火</div>
+                        <div class="calendar-day-header">水</div>
+                        <div class="calendar-day-header">木</div>
+                        <div class="calendar-day-header">金</div>
+                        <div class="calendar-day-header">土</div>
+                    </div>
+                    
+                    <!-- カレンダー本体 -->
+                    <div id="calendar-grid" class="calendar-grid">
+                        <!-- JavaScriptで動的生成 -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">読み込み中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 画像がない場合のメッセージ -->
+    <div class="row" id="no-images-message" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> この月に撮影された画像はありません
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 画像拡大モーダル -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">
+                    <i class="fas fa-camera text-success"></i> <span id="modal-date"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- メイン画像 -->
+                <div class="text-center mb-3">
+                    <img id="modal-image" src="" class="img-fluid rounded" style="max-height: 500px;">
+                </div>
+                
+                <!-- センサー情報 -->
+                <div class="row mb-3" id="sensor-info">
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-2">
+                                <small class="text-muted">🌡️ 温度</small>
+                                <h6 class="mb-0" id="modal-temp">-</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-2">
+                                <small class="text-muted">💧 湿度</small>
+                                <h6 class="mb-0" id="modal-humidity">-</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 同じ日の他の画像 -->
+                <div id="same-day-images" style="display: none;">
+                    <hr>
+                    <h6><i class="fas fa-images"></i> この日の他の画像 (<span id="same-day-count"></span>枚)</h6>
+                    <div class="row g-2" id="same-day-thumbnails">
+                        <!-- サムネイルがここに表示される -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="navigateDay(-1)">
+                    <i class="fas fa-arrow-left"></i> 前の日
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="navigateDay(1)">
+                    次の日 <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
+{% endblock %}
+

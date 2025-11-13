@@ -1,0 +1,359 @@
+let allSchedules = [];
+let filteredSchedules = [];
+let currentEditingId = null;
+let updateInterval = null;
+let editModal = null;
+
+// ジョブアイコン取得
+function getJobIcon(jobType) {
+    const icons = {
+        'camera': '📷',
+        'sensor': '📊',
+        'water': '💧'
+    };
+    return icons[jobType] || '🔧';
+}
+
+// ジョブラベル取得
+function getJobLabel(jobType) {
+    const labels = {
+        'camera': 'カメラ撮影',
+        'sensor': 'センサー測定',
+        'water': '水やり'
+    };
+    return labels[jobType] || jobType;
+}
+
+// 次回実行時刻を計算
+function calculateNextExecution(execTime) {
+    const now = new Date();
+    const [hours, minutes, seconds] = execTime.split(':').map(Number);
+    
+    const next = new Date(now);
+    next.setHours(hours, minutes, seconds || 0, 0);
+    
+    // 今日の実行時刻が過ぎていたら明日
+    if (next <= now) {
+        next.setDate(next.getDate() + 1);
+    }
+    
+    return next;
+}
+
+// スケジュール読み込み
+function loadSchedules() {
+    fetch('/api/schedules')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                allSchedules = result.schedules;
+                applyFilters();
+                
+                // 最終更新時刻
+                const now = new Date();
+                document.getElementById('last-update').textContent = now.toLocaleTimeString('ja-JP');
+            } else {
+                console.error('Failed to load schedules:', result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching schedules:', error);
+        });
+}
+
+// フィルター適用
+function applyFilters() {
+    const layerFilter = document.getElementById('layer-filter').value;
+    const jobFilter = document.getElementById('job-filter').value;
+    
+    filteredSchedules = allSchedules.filter(schedule => {
+        // レイヤーフィルター
+        if (layerFilter && schedule.layer_id.toString() !== layerFilter) {
+            return false;
+        }
+        
+        // ジョブ種別フィルター
+        if (jobFilter && schedule.job_type !== jobFilter) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // 結果件数表示
+    document.getElementById('result-count').textContent = filteredSchedules.length;
+    
+    // 表示
+    renderSchedules();
+}
+
+// スケジュールをレンダリング
+function renderSchedules() {
+    const container = document.getElementById('schedules-container');
+    
+    container.innerHTML = '';
+    
+    if (filteredSchedules.length === 0) {
+        document.getElementById('no-schedules-message').style.display = 'block';
+        return;
+    }
+    
+    document.getElementById('no-schedules-message').style.display = 'none';
+    
+    filteredSchedules.forEach(schedule => {
+        const card = createScheduleCard(schedule);
+        container.appendChild(card);
+    });
+}
+
+// スケジュールカードを作成
+function createScheduleCard(schedule) {
+    const card = document.createElement('div');
+    
+    // Layer 0とLayer 1+で色を変える
+    const isSystemLayer = schedule.layer_id === 0;
+    const borderColor = isSystemLayer ? 'border-primary' : 'border-success';
+    card.className = `card mb-3 shadow-sm ${borderColor}`;
+    
+    const jobIcon = getJobIcon(schedule.job_type);
+    const jobLabel = getJobLabel(schedule.job_type);
+    const nextExec = calculateNextExecution(schedule.exec_time);
+    const nextExecStr = nextExec.toLocaleString('ja-JP');
+    
+    // 時間を分かりやすく表示
+    const timeStr = schedule.exec_time.substring(0, 5); // HH:MM
+    
+    // 有効/無効の状態
+    const isEnabled = schedule.is_enabled;
+    const statusBadge = isEnabled 
+        ? '<span class="badge bg-success">有効</span>' 
+        : '<span class="badge bg-secondary">無効</span>';
+    
+    // Layer badge
+    const layerBadge = isSystemLayer 
+        ? '<span class="badge bg-primary"><i class="fas fa-cog"></i> システム全体</span>'
+        : `<span class="badge bg-success"><i class="fas fa-layer-group"></i> ${schedule.layer_id}段目</span>`;
+    
+    // ジョブの説明
+    let jobDescription = '';
+    if (isSystemLayer) {
+        if (schedule.job_type === 'sensor') {
+            jobDescription = '<small class="text-muted d-block"><i class="fas fa-info-circle"></i> 温湿度 + タンク圧力を測定（全層共通）</small>';
+        } else if (schedule.job_type === 'water') {
+            jobDescription = '<small class="text-muted d-block"><i class="fas fa-info-circle"></i> 給水ポンプを起動（上から下へ循環）</small>';
+        }
+    } else {
+        if (schedule.job_type === 'camera') {
+            jobDescription = '<small class="text-muted d-block"><i class="fas fa-info-circle"></i> この層の豆苗を撮影</small>';
+        }
+    }
+    
+    card.innerHTML = `
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-5 mb-2 mb-md-0">
+                    <div class="d-flex align-items-center mb-1">
+                        <h5 class="mb-0 me-2">
+                            ${jobIcon} ${jobLabel}
+                        </h5>
+                        ${layerBadge}
+                    </div>
+                    ${jobDescription}
+                </div>
+                
+                <div class="col-6 col-md-2 mb-2 mb-md-0">
+                    <small class="text-muted d-block">実行時刻</small>
+                    <strong class="fs-5">${timeStr}</strong>
+                </div>
+                
+                <div class="col-6 col-md-2 mb-2 mb-md-0">
+                    ${statusBadge}
+                </div>
+                
+                <div class="col-12 col-md-3 text-md-end">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm ${isEnabled ? 'btn-success' : 'btn-outline-secondary'}" 
+                                onclick="toggleSchedule(${schedule.schedule_id})"
+                                title="${isEnabled ? '無効にする' : '有効にする'}">
+                            <i class="fas fa-power-off"></i>
+                        </button>
+                        ${schedule.job_type !== 'sensor' ? `
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="openEditModal(${schedule.schedule_id})"
+                                title="編集">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ` : `
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                disabled
+                                title="センサージョブの時刻は変更できません">
+                            <i class="fas fa-lock"></i>
+                        </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+            
+            ${isEnabled ? `
+            <div class="row mt-2">
+                <div class="col-12">
+                    <small class="text-muted">
+                        <i class="fas fa-clock"></i> 次回実行: ${nextExecStr}
+                    </small>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    return card;
+}
+
+// トグル切り替え
+function toggleSchedule(scheduleId) {
+    fetch(`/api/schedules/${scheduleId}/toggle`, {
+        method: 'PATCH'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // 再読み込み
+            loadSchedules();
+        } else {
+            alert('エラー: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling schedule:', error);
+        alert('スケジュールの切り替えに失敗しました');
+    });
+}
+
+// 編集モーダルを開く
+function openEditModal(scheduleId) {
+    const schedule = allSchedules.find(s => s.schedule_id === scheduleId);
+    if (!schedule) return;
+    
+    currentEditingId = scheduleId;
+    
+    // モーダルに情報を設定
+    const jobIcon = getJobIcon(schedule.job_type);
+    const jobLabel = getJobLabel(schedule.job_type);
+    const isSystemLayer = schedule.layer_id === 0;
+    
+    // ジョブ種別の表示（説明付き）
+    let jobTypeHtml = `${jobIcon} ${jobLabel}`;
+    if (isSystemLayer) {
+        if (schedule.job_type === 'sensor') {
+            jobTypeHtml += '<br><small class="text-muted">温湿度 + タンク圧力を測定</small>';
+        } else if (schedule.job_type === 'water') {
+            jobTypeHtml += '<br><small class="text-muted">給水ポンプを起動（上から下へ循環）</small>';
+        }
+    } else {
+        if (schedule.job_type === 'camera') {
+            jobTypeHtml += '<br><small class="text-muted">この層の豆苗を撮影</small>';
+        }
+    }
+    document.getElementById('modal-job-type').innerHTML = jobTypeHtml;
+    
+    // レイヤーの表示（バッジ付き）
+    const layerHtml = isSystemLayer 
+        ? 'Layer 0 <span class="badge bg-primary ms-2">システム全体</span>'
+        : `Layer ${schedule.layer_id} <span class="badge bg-success ms-2">${schedule.layer_id}段目</span>`;
+    document.getElementById('modal-layer').innerHTML = layerHtml;
+    
+    // 時刻を分解
+    const [hours, minutes, seconds] = schedule.exec_time.split(':').map(Number);
+    document.getElementById('modal-hour').value = hours;
+    document.getElementById('modal-minute').value = minutes;
+    document.getElementById('modal-second').value = seconds || 0;
+    
+    // 次回実行予定
+    updateNextExecPreview();
+    
+    // モーダルを表示
+    editModal.show();
+}
+
+// 次回実行予定のプレビューを更新
+function updateNextExecPreview() {
+    const hour = parseInt(document.getElementById('modal-hour').value) || 0;
+    const minute = parseInt(document.getElementById('modal-minute').value) || 0;
+    const second = parseInt(document.getElementById('modal-second').value) || 0;
+    
+    const execTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+    const nextExec = calculateNextExecution(execTime);
+    
+    document.getElementById('modal-next-exec').textContent = nextExec.toLocaleString('ja-JP');
+}
+
+// スケジュールを保存
+function saveSchedule() {
+    const hour = parseInt(document.getElementById('modal-hour').value);
+    const minute = parseInt(document.getElementById('modal-minute').value);
+    const second = parseInt(document.getElementById('modal-second').value) || 0;
+    
+    // バリデーション
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+        alert('時間は0〜23の範囲で入力してください');
+        return;
+    }
+    if (isNaN(minute) || minute < 0 || minute > 59) {
+        alert('分は0〜59の範囲で入力してください');
+        return;
+    }
+    if (isNaN(second) || second < 0 || second > 59) {
+        alert('秒は0〜59の範囲で入力してください');
+        return;
+    }
+    
+    const execTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+    
+    // API呼び出し
+    fetch(`/api/schedules/${currentEditingId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            exec_time: execTime
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            editModal.hide();
+            loadSchedules();
+        } else {
+            alert('エラー: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving schedule:', error);
+        alert('スケジュールの保存に失敗しました');
+    });
+}
+
+// 初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // モーダル初期化
+    editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    
+    // 時刻入力のプレビュー更新
+    ['modal-hour', 'modal-minute', 'modal-second'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateNextExecPreview);
+    });
+    
+    // スケジュール読み込み
+    loadSchedules();
+    
+    // 30秒ごとに自動更新
+    updateInterval = setInterval(loadSchedules, 30000);
+});
+
+// ページを離れるときにインターバルをクリア
+window.addEventListener('beforeunload', function() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+});

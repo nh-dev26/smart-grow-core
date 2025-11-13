@@ -10,6 +10,7 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--light-bg);
+    padding-top: 70px; /* fixed-topナビゲーションバーのためのスペース */
 }
 
 /* ナビゲーションバー */

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}システムログ - Smart Grow System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6">
+                システムログ
+            </h1>
+        </div>
+    </div>
+
+    <!-- フィルター -->
+    <div class="row mb-3">
+        <div class="col-12 col-md-3 mb-2">
+            <label class="form-label small text-muted">ログレベル</label>
+            <select class="form-select" id="level-filter" onchange="applyFilters()">
+                <option value="">全て</option>
+                <option value="CRITICAL">CRITICAL</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARNING">WARNING</option>
+                <option value="INFO">INFO</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 mb-2">
+            <label class="form-label small text-muted">レイヤー</label>
+            <select class="form-select" id="layer-filter" onchange="applyFilters()">
+                <option value="">全て</option>
+                <option value="0">System (Layer 0)</option>
+                <option value="1">Layer 1</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 mb-2">
+            <label class="form-label small text-muted">ジョブ種別</label>
+            <select class="form-select" id="job-filter" onchange="applyFilters()">
+                <option value="">全て</option>
+                <option value="camera">📷 カメラ</option>
+                <option value="sensor">📊 センサー</option>
+                <option value="water">💧 水やり</option>
+                <option value="system">🔧 システム</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 mb-2">
+            <label class="form-label small text-muted">検索</label>
+            <input type="text" class="form-control" id="search-input" placeholder="キーワード..." onkeyup="applyFilters()">
+        </div>
+    </div>
+
+    <!-- 検索結果 -->
+    <div class="row mb-3">
+        <div class="col">
+            <div class="alert alert-light mb-0 py-2">
+                <small>
+                    <i class="fas fa-filter"></i> 検索結果: <strong id="result-count">0</strong>件
+                    <span class="ms-3">
+                        <i class="fas fa-sync-alt"></i> 最終更新: <span id="last-update">-</span>
+                    </span>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ログ一覧 -->
+    <div class="row">
+        <div class="col-12">
+            <div id="logs-container">
+                <!-- ログがここに表示される -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">読み込み中...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- もっと読み込むボタン -->
+            <div class="text-center mt-3" id="load-more-container" style="display: none;">
+                <button class="btn btn-outline-success" onclick="loadMoreLogs()">
+                    <i class="fas fa-chevron-down"></i> さらに読み込む (20件)
+                </button>
+            </div>
+
+            <!-- データなしメッセージ -->
+            <div class="text-center py-5" id="no-logs-message" style="display: none;">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">該当するログがありません</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ログ詳細モーダル -->
+<div class="modal fade" id="logModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-alt text-success"></i> ログ詳細
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">📅 日時</small>
+                        <p id="modal-timestamp" class="mb-0"></p>
+                    </div>
+                    <div class="col-3">
+                        <small class="text-muted">🏷️ レベル</small>
+                        <p id="modal-level" class="mb-0"></p>
+                    </div>
+                    <div class="col-3">
+                        <small class="text-muted">🔢 Layer</small>
+                        <p id="modal-layer" class="mb-0"></p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted">📝 メッセージ</small>
+                    <p id="modal-message" class="mb-0"></p>
+                </div>
+
+                <div id="modal-details-section" style="display: none;">
+                    <small class="text-muted">📄 詳細</small>
+                    <pre id="modal-details" class="bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
+                </div>
+
+                <div id="modal-job-type" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/logs.js') }}"></script>
+{% endblock %}

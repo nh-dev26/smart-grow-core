@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}センサーグラフ - Smart Grow System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6">
+                <i class="fas fa-chart-line text-success"></i> センサーグラフ
+            </h1>
+            <p class="text-muted">温湿度とタンク残量の推移</p>
+        </div>
+    </div>
+
+    <!-- 期間選択ボタン -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="btn-group w-100" role="group">
+                <button type="button" class="btn btn-outline-success active" data-hours="24" onclick="changePeriod(24)">
+                    <i class="fas fa-clock"></i> 24時間
+                </button>
+                <button type="button" class="btn btn-outline-success" data-hours="168" onclick="changePeriod(168)">
+                    <i class="fas fa-calendar-week"></i> 7日間
+                </button>
+                <button type="button" class="btn btn-outline-success" data-hours="720" onclick="changePeriod(720)">
+                    <i class="fas fa-calendar-alt"></i> 30日間
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最終更新時刻 -->
+    <div class="row mb-3">
+        <div class="col text-end">
+            <small class="text-muted">
+                <i class="fas fa-sync-alt"></i> 最終更新: <span id="last-update">読み込み中...</span>
+            </small>
+        </div>
+    </div>
+
+    <!-- 温度グラフ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-thermometer-half text-danger"></i> 温度の推移
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 湿度グラフ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tint text-info"></i> 湿度の推移
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- タンク残量 -->
+    <div class="row g-3">
+        <!-- 給水タンク -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-water text-primary"></i> 給水タンク残量
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="mb-0" id="supply-value">
+                            <span class="spinner-border spinner-border-sm"></span>
+                        </h2>
+                        <small class="text-muted">現在の水圧</small>
+                    </div>
+                    
+                    <!-- プログレスバー -->
+                    <div class="mb-3">
+                        <div class="progress" style="height: 30px;">
+                            <div id="supply-progress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 閾値情報 -->
+                    <div class="alert alert-info mb-0" id="supply-alert">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>閾値:</strong> <span id="supply-threshold">90.0</span> kPa以下で警告
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排水タンク -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-recycle text-warning"></i> 排水タンク残量
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="mb-0" id="drain-value">
+                            <span class="spinner-border spinner-border-sm"></span>
+                        </h2>
+                        <small class="text-muted">現在の水圧</small>
+                    </div>
+                    
+                    <!-- プログレスバー -->
+                    <div class="mb-3">
+                        <div class="progress" style="height: 30px;">
+                            <div id="drain-progress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 閾値情報 -->
+                    <div class="alert alert-info mb-0" id="drain-alert">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>閾値:</strong> <span id="drain-threshold">150.0</span> kPa以上で警告
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/sensors.js') }}"></script>
+<!-- Chart.js time adapter -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+{% endblock %}
