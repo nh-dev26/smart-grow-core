@@ -15,7 +15,7 @@ from database.db_manager import (
     select_next_schedules as db_select_next_schedules,
     select_system_config
 )
-from core.ai_manager import gemini_model, create_system_prompt
+from core.ai_manager import process_ai_chat as core_process_ai_chat
 
 
 def select_dashboard_data(image_layer_id=1):
@@ -148,3 +148,14 @@ def toggle_schedule(schedule_id):
         new_state = 0 if row['is_enabled'] else 1
         cursor.execute("UPDATE schedules SET is_enabled = ? WHERE schedule_id = ?", (new_state, schedule_id))
         return bool(new_state)
+
+def select_images(layer_id=1, limit=100):
+    """画像一覧を取得する"""
+    # core パッケージの file_manager から関数をインポートして使用
+    from core.file_manager import select_images as core_select_images
+    return core_select_images(layer_id, limit)
+
+def process_ai_chat(user_message, image_filename, sensor_data):
+    """AIチャットの応答を取得する"""
+    # core パッケージの ai_manager から関数をインポートして使用
+    return core_process_ai_chat(user_message, image_filename, sensor_data)

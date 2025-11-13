@@ -1,5 +1,5 @@
 # web_api_bp/routes/api_routes.py
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from datetime import datetime
 from .. import services
 
@@ -166,7 +166,7 @@ def api_ai_chat():
         if not user_message:
             return jsonify({'error': 'メッセージが空です'}), 400
         
-        ai_response = services.process_ai_chat(user_message, image_filename, sensor_data)
+        ai_response = services.process_ai_chat(user_message, image_filename, sensor_data, current_app.root_path)
         
         return jsonify({
             'response': ai_response,

@@ -49,17 +49,17 @@ def create_system_prompt(sensor_data, image_filename):
     return prompt
 
 
-def process_ai_chat(user_message, image_filename, sensor_data):
+def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=None):
     """AIチャットの応答を取得する"""
     if not gemini_model:
         raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
 
     system_prompt = create_system_prompt(sensor_data, image_filename)
     image_data = None
-    if image_filename:
+    if image_filename and app_root_path:
         try:
-            parent_dir = Path(__file__).parent
-            image_path = parent_dir / 'plant_images' / 'layer_1' / image_filename
+            # web_appのルートパスを基準に画像パスを構築
+            image_path = Path(app_root_path).parent / 'plant_images' / 'layer_1' / image_filename
             if image_path.exists():
                 with open(image_path, 'rb') as f:
                     image_bytes = f.read()

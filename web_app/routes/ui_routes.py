@@ -1,6 +1,6 @@
 # web_app/routes/ui_routes.py
 
-from flask import Blueprint, render_template, request, send_from_directory
+from flask import Blueprint, render_template, request, send_from_directory, current_app
 from pathlib import Path
 
 
@@ -46,7 +46,6 @@ def logs():
 @ui_bp.route('/plant_images/<path:filename>')
 def serve_plant_images(filename):
     """plant_images ディレクトリの画像を配信"""
-    # 親ディレクトリのplant_imagesを参照
-    parent_dir = Path(__file__).parent.parent
-    return send_from_directory(parent_dir / 'plant_images', filename)
-
+    # アプリケーションのルートパスからの相対パスで画像ディレクトリを指定
+    image_dir = Path(current_app.root_path).parent / 'plant_images'
+    return send_from_directory(image_dir, filename)

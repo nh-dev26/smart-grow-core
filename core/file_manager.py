@@ -5,8 +5,9 @@ from datetime import datetime
 
 def select_images(layer_id=1, limit=100):
     """画像一覧を取得する"""
-    parent_dir = Path(__file__).parent
-    image_dir = parent_dir / 'plant_images' / f'layer_{layer_id}'
+    # coreディレクトリの親、つまりプロジェクトルートを基準にする
+    project_root = Path(__file__).parent.parent
+    image_dir = project_root / 'plant_images' / f'layer_{layer_id}'
     
     if not image_dir.exists():
         return []
