@@ -40,3 +40,11 @@ def logs():
     """システムログ画面"""
     return render_template('logs.html')
 
+
+@ui_bp.route('/plant_images/<path:filename>')
+def serve_plant_images(filename):
+    """plant_images ディレクトリの画像を配信"""
+    # 親ディレクトリのplant_imagesを参照
+    parent_dir = Path(__file__).parent.parent
+    return send_from_directory(parent_dir / 'plant_images', filename)
+
