@@ -1,11 +1,7 @@
 # web_api_bp/routes/api_routes.py
-
-from flask import Blueprint, jsonify
-from flask import request
+from flask import Blueprint, jsonify, request
 from datetime import datetime
 from .. import services
-from database.db_manager import select_system_config
-
 
 # Blueprintを定義。URLプレフィックスは '/api' に設定
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -92,7 +88,7 @@ def api_logs_list():
 def api_system_config():
     """システム設定を取得"""
     try:
-        config = select_system_config()
+        config = services.select_system_config()
         return jsonify({
             'success': True,
             'config': config

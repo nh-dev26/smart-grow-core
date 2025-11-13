@@ -77,34 +77,6 @@ def select_sensor_history(hours=24):
         'interval_minutes': interval_minutes
     }
 
-def select_images(layer_id=1, limit=100):
-    """画像一覧を取得する"""
-    parent_dir = Path(__file__).parent
-    image_dir = parent_dir / 'plant_images' / f'layer_{layer_id}'
-    
-    if not image_dir.exists():
-        return []
-
-    image_files = []
-    for ext in ['*.jpg', '*.jpeg', '*.png']:
-        image_files.extend(glob.glob(str(image_dir / ext)))
-    
-    images = []
-    for file_path in image_files:
-        filename = os.path.basename(file_path)
-        try:
-            date_str = filename.split('.')[0]
-            timestamp = datetime.strptime(date_str, '%Y%m%d_%H%M%S').isoformat()
-        except ValueError:
-            mtime = os.path.getmtime(file_path)
-            timestamp = datetime.fromtimestamp(mtime).isoformat()
-        
-        relative_path = f'plant_images/layer_{layer_id}/{filename}'
-        images.append({'image_path': relative_path, 'timestamp': timestamp, 'filename': filename})
-    
-    images.sort(key=lambda x: x['timestamp'], reverse=True)
-    return images[:limit]
-
 def select_ai_reports(layer_id=1, limit=20):
     """AI解析レポート一覧を取得する"""
     with open_db() as conn:
@@ -176,46 +148,3 @@ def toggle_schedule(schedule_id):
         new_state = 0 if row['is_enabled'] else 1
         cursor.execute("UPDATE schedules SET is_enabled = ? WHERE schedule_id = ?", (new_state, schedule_id))
         return bool(new_state)
-
-def process_ai_chat(user_message, image_filename, sensor_data):
-    """AIチャットの応答を取得する"""
-    if not gemini_model:
-        raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
-
-    system_prompt = create_system_prompt(sensor_data, image_filename)
-    image_data = None
-    if image_filename:
-        try:
-            parent_dir = Path(__file__).parent
-            image_path = parent_dir / 'plant_images' / 'layer_1' / image_filename
-            if image_path.exists():
-                with open(image_path, 'rb') as f:
-                    image_bytes = f.read()
-                image_data = Image.open(io.BytesIO(image_bytes))
-            else:
-                print(f"Warning: 画像ファイルが見つかりません: {image_path}")
-        except Exception as e:
-            print(f"画像読み込みエラー: {e}")
-
-    try:
-        if image_data:
-            print(f"[AI Chat] 画像付きリクエスト: {user_message[:50]}...")
-            response = gemini_model.generate_content([system_prompt + "\n\n" + user_message, image_data])
-        else:
-            print(f"[AI Chat] テキストリクエスト: {user_message[:50]}...")
-            response = gemini_model.generate_content(system_prompt + "\n\n" + user_message)
-        
-        ai_response = response.text
-        print(f"[AI Chat] レスポンス受信: {len(ai_response)}文字")
-        return ai_response
-    except Exception as e:
-        error_msg = str(e)
-        print(f"[AI Chat] Gemini API エラー: {error_msg}")
-        if 'Timeout' in error_msg or 'DNS' in error_msg:
-            raise ConnectionError('Gemini APIへの接続がタイムアウトしました。ネットワーク接続を確認してください。')
-        elif '403' in error_msg or 'API key' in error_msg:
-            raise ValueError('APIキーが無効です。設定を確認してください。')
-        elif '429' in error_msg:
-            raise ConnectionError('APIの使用制限に達しました。しばらく待ってから再試行してください。')
-        else:
-            raise RuntimeError(f'AI処理中にエラーが発生しました: {error_msg}')
