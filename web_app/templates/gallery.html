@@ -40,29 +40,35 @@
         </div>
     </div>
 
-    <!-- カレンダー -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <!-- 曜日ヘッダー -->
-                    <div class="calendar-header">
-                        <div class="calendar-day-header">日</div>
-                        <div class="calendar-day-header">月</div>
-                        <div class="calendar-day-header">火</div>
-                        <div class="calendar-day-header">水</div>
-                        <div class="calendar-day-header">木</div>
-                        <div class="calendar-day-header">金</div>
-                        <div class="calendar-day-header">土</div>
-                    </div>
-                    
-                    <!-- カレンダー本体 -->
-                    <div id="calendar-grid" class="calendar-grid">
-                        <!-- JavaScriptで動的生成 -->
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-success" role="status">
-                                <span class="visually-hidden">読み込み中...</span>
-                            </div>
+    <!-- 表示切替 -->
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="view-toggle" id="timeline-view-btn" autocomplete="off" checked onchange="toggleView('timeline')">
+                <label class="btn btn-outline-success" for="timeline-view-btn"><i class="fas fa-stream"></i> タイムライン</label>
+
+                <input type="radio" class="btn-check" name="view-toggle" id="calendar-view-btn" autocomplete="off" onchange="toggleView('calendar')">
+                <label class="btn btn-outline-success" for="calendar-view-btn"><i class="fas fa-calendar-alt"></i> カレンダー</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- タイムライン表示 -->
+    <div id="timeline-view">
+        <!-- JSで動的に生成 -->
+    </div>
+
+    <!-- カレンダー表示 -->
+    <div id="calendar-view" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="calendar-header">
+                            <!-- Days of the week -->
+                        </div>
+                        <div id="calendar-grid" class="calendar-grid">
+                            <!-- Calendar days -->
                         </div>
                     </div>
                 </div>
@@ -111,6 +117,21 @@
                             <div class="card-body text-center py-2">
                                 <small class="text-muted">💧 湿度</small>
                                 <h6 class="mb-0" id="modal-humidity">-</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI解析レポート -->
+                <div id="ai-report-section" style="display: none;">
+                    <hr>
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h6 class="mb-3">
+                                <i class="fas fa-robot text-success"></i> AI解析レポート
+                            </h6>
+                            <div id="gallery-ai-report-content">
+                                <!-- AI解析レポートがここに表示される -->
                             </div>
                         </div>
                     </div>

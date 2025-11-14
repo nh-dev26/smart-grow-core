@@ -1,41 +1,53 @@
+/* カレンダーのスタイル */
 .calendar-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
+    gap: 2px;
+    margin-bottom: 6px;
+    font-size: 16px; /* タップ拡大防止 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .calendar-day-header {
     text-align: center;
     font-weight: bold;
-    padding: 10px;
+    padding: 5px;
     background-color: #f8f9fa;
-    border-radius: 5px;
+    border-radius: 3px;
+    font-size: 0.8rem; /* 見た目は小さく調整 */
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 2px;
+    font-size: 16px; /* タップ拡大防止 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .calendar-day {
     aspect-ratio: 1;
     border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 8px;
+    border-radius: 3px;
+    padding: 3px;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
+    transform: translate(-2px, -2px);
+    font-size: 16px; /* タップ拡大防止 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .calendar-day:hover {
     background-color: #f8f9fa;
-    transform: scale(1.05);
+    transform: translate(-2px, -2px) scale(1.05);
 }
 
 .calendar-day.empty {
@@ -44,7 +56,7 @@
 }
 
 .calendar-day.empty:hover {
-    transform: none;
+    transform: translate(-2px, -2px);
 }
 
 .calendar-day.has-images {
@@ -58,42 +70,87 @@
 
 .day-number {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 0.85rem; /* 内部で小さく表示 */
 }
 
 .image-count {
-    font-size: 0.9rem;
+    font-size: 0.7rem; /* 内部で小さく表示 */
     color: #198754;
-    margin-top: 5px;
+    margin-top: 2px;
 }
 
 .calendar-day.today {
     border: 2px solid #198754;
-    box-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
+    box-shadow: 0 0 6px rgba(25, 135, 84, 0.3);
 }
 
 /* モバイル対応 */
 @media (max-width: 576px) {
     .calendar-day {
-        padding: 5px;
+        padding: 2px;
+        transform: translate(-1px, -1px);
     }
-    
+
     .day-number {
-        font-size: 0.9rem;
-    }
-    
-    .image-count {
         font-size: 0.75rem;
     }
+
+    .image-count {
+        font-size: 0.65rem;
+    }
+
+    .calendar-day-header {
+        padding: 3px;
+        font-size: 0.7rem;
+    }
+}
+
+/* 次/前の日ボタン */
+.next-day-btn,
+.prev-day-btn {
+    font-size: 16px; /* タップ拡大防止 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 /* サムネイル */
 .thumbnail-img {
     cursor: pointer;
-    transition: transform 0.2s;
-    border-radius: 5px;
+    border-radius: 3px;
 }
 
-.thumbnail-img:hover {
-    transform: scale(1.05);
+/* タイムライン */
+.timeline {
+    position: relative;
+    padding: 12px 0;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+    border-radius: 2px;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 12px;
+    padding-left: 42px;
+}
+.timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #198754;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    border: 2px solid white;
 }

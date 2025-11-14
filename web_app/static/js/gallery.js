@@ -161,6 +161,9 @@ function updateModalContent(dateStr) {
     document.getElementById('modal-date').textContent = 
         `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
     
+    // AI解析レポートセクションを非表示にする（日付が変わったら一旦隠す）
+    document.getElementById('ai-report-section').style.display = 'none';
+    
     // 画像がある場合は表示、ない場合はメッセージ表示
     if (images.length > 0) {
         showImage(images[0], images);
@@ -178,6 +181,9 @@ function showImage(imageData, allDayImages) {
     
     // センサーデータを取得（画像のタイムスタンプに近いデータ）
     fetchSensorData(imageData.timestamp);
+    
+    // AI解析レポートを取得
+    fetchAIReportForImage(imageData.path);
     
     // センサー情報を表示
     document.getElementById('sensor-info').style.display = 'flex';
@@ -245,6 +251,86 @@ function fetchSensorData(timestamp) {
         });
 }
 
+// AI解析レポートを取得
+function fetchAIReportForImage(imagePath) {
+    const reportSection = document.getElementById('ai-report-section');
+    const reportContent = document.getElementById('gallery-ai-report-content');
+    
+    // API経由で画像に対応するAI解析レポートを取得
+    fetch(`/api/ai-report-by-image?image_path=${encodeURIComponent(imagePath)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.report) {
+                const report = data.report;
+                const stars = getGalleryStarRating(report.growth_rate);
+                const timestamp = new Date(report.timestamp).toLocaleString('ja-JP');
+                
+                reportContent.innerHTML = `
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <div style="font-size: 2rem;">${stars}</div>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">成長率: ${report.growth_rate}%</h5>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${timestamp}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">状態サマリー</h6>
+                        <p class="mb-0">${report.ai_summary || 'データなし'}</p>
+                    </div>
+                    
+                    ${report.ai_advice ? `
+                    <div class="mb-2">
+                        <h6 class="text-muted"><i class="fas fa-lightbulb text-warning"></i> アドバイス</h6>
+                        <div class="alert alert-info py-2 mb-0">
+                            <small>${formatGalleryAdvice(report.ai_advice)}</small>
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                
+                reportSection.style.display = 'block';
+            } else {
+                // AI解析レポートがない場合は非表示
+                reportSection.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI report:', error);
+            reportSection.style.display = 'none';
+        });
+}
+
+// 成長率から星評価を生成（ギャラリー用）
+function getGalleryStarRating(growthRate) {
+    const starCount = Math.ceil(growthRate / 20);
+    const fullStars = '⭐'.repeat(Math.min(starCount, 5));
+    const emptyStars = '☆'.repeat(Math.max(0, 5 - starCount));
+    return fullStars + emptyStars;
+}
+
+// アドバイステキストをフォーマット（ギャラリー用）
+function formatGalleryAdvice(advice) {
+    if (!advice) return 'アドバイスなし';
+    
+    const lines = advice.split('\n');
+    let formatted = '';
+    lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+            formatted += line.substring(1).trim() + '<br>';
+        } else if (line) {
+            formatted += line + '<br>';
+        }
+    });
+    
+    return formatted || advice;
+}
+
 // 前後の日へ移動
 function navigateDay(delta) {
     if (!currentModalDate) return;
@@ -257,6 +343,94 @@ function navigateDay(delta) {
     // モーダルの内容のみを更新（新しくモーダルを開かない）
     updateModalContent(newDateStr);
 }
+
+// 表示切替
+function toggleView(view) {
+    if (view === 'timeline') {
+        document.getElementById('timeline-view').style.display = 'block';
+        document.getElementById('calendar-view').style.display = 'none';
+        renderTimeline(); // タイムラインを描画
+    } else {
+        document.getElementById('timeline-view').style.display = 'none';
+        document.getElementById('calendar-view').style.display = 'block';
+        renderCalendar(); // カレンダーを描画
+    }
+}
+
+// タイムラインのレンダリング
+function renderTimeline() {
+    const timelineContainer = document.getElementById('timeline-view');
+    timelineContainer.innerHTML = '<div class="timeline"></div>'; // Reset
+    const timeline = timelineContainer.querySelector('.timeline');
+
+    if (allImages.length === 0) {
+        timeline.innerHTML = '<p class="text-muted text-center">表示できる画像がありません。</p>';
+        return;
+    }
+
+    // 日付ごとにグループ化
+    const imagesByDay = {};
+    allImages.forEach(img => {
+        const date = new Date(img.timestamp).toLocaleDateString('ja-JP');
+        if (!imagesByDay[date]) {
+            imagesByDay[date] = [];
+        }
+        imagesByDay[date].push(img);
+    });
+
+    for (const date in imagesByDay) {
+        const dayImages = imagesByDay[date];
+        const firstImage = dayImages[0];
+
+        const timelineItem = document.createElement('div');
+        timelineItem.className = 'timeline-item';
+
+        timelineItem.innerHTML = `
+            <div class="timeline-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <strong>${date}</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="/${firstImage.image_path}" class="img-fluid rounded" style="cursor: pointer;" onclick="openModal('${firstImage.date}')">
+                        </div>
+                        <div class="col-md-8" id="report-${firstImage.date}">
+                            <p class="text-muted">AI解析レポートを読み込み中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        timeline.appendChild(timelineItem);
+        fetchAIReportForTimeline(firstImage.image_path, `report-${firstImage.date}`);
+    }
+}
+
+// タイムライン用のAIレポート取得
+function fetchAIReportForTimeline(imagePath, elementId) {
+    const reportContainer = document.getElementById(elementId);
+    fetch(`/api/ai-report-by-image?image_path=${encodeURIComponent(imagePath)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.report) {
+                const report = data.report;
+                reportContainer.innerHTML = `
+                    <h5>${report.ai_summary}</h5>
+                    <p class="text-muted">${report.ai_advice}</p>
+                    <button class="btn btn-sm btn-outline-success" onclick="openModal('${new Date(report.timestamp).toISOString().split('T')[0]}')">
+                        詳細を見る
+                    </button>
+                `;
+            } else {
+                reportContainer.innerHTML = '<p class="text-muted">この画像のAI解析レポートはありません。</p>';
+            }
+        });
+}
+
 
 // 初期化
 document.addEventListener('DOMContentLoaded', function() {
