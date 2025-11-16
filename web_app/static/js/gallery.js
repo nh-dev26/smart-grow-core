@@ -35,6 +35,7 @@ function loadGallery() {
                 allImages = result.images;
                 processImages();
                 renderCalendar();
+                renderTimeline();
             } else {
                 console.error('Failed to load images:', result.error);
             }
