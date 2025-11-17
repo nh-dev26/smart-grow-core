@@ -38,3 +38,4 @@ Thumbs.db
 
 # 環境変数ファイル
 .env
+.env.*
