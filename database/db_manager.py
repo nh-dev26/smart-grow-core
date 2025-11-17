@@ -189,11 +189,11 @@ def insert_sensor_log(layer_id, temperature=None, humidity=None, supply_pressure
             (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure)
         )
 
-def insert_camera_log(layer_id, image_path):
+def insert_camera_log(layer_id, timestamp_str, image_path):
     """
     カメラ撮影後にAI解析に前段階として画像パスを含むレポートの器を作成する
     """
-    timestamp = datetime.now().isoformat()
+    # timestamp = datetime.now().isoformat()
     with open_db() as conn:
         conn.execute(
             """
@@ -201,19 +201,23 @@ def insert_camera_log(layer_id, image_path):
                 layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path, json_response, slack_sent, llm_model_name, last_updated
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (layer_id, timestamp, 0.0, 'N/A', '', image_path, '{}', 0, 'gpt-4-turbo', timestamp)
+            (layer_id, timestamp_str, 0.0, 'N/A', '', image_path, '{}', 0, 'gpt-4-turbo', timestamp_str)
         )
 
 
-def insert_system_log(layer_id, log_level, message, details=None):
+def insert_system_log(layer_id, log_level, message, details=None, timestamp_str=None):
     """
     システムの動作ログやアラートを system_logs テーブルに記録する。
     """
-    timestamp = datetime.now().isoformat()
+  
+    if timestamp_str is None:
+        # 既存の呼び出し元が引数を渡さない場合は、この行が実行される
+        timestamp_str = datetime.now().isoformat()
+        
     with open_db() as conn:
         conn.execute(
             "INSERT INTO system_logs (timestamp, layer_id, log_level, message, details) VALUES (?, ?, ?, ?, ?)",
-            (timestamp, layer_id, log_level, message, details)
+            (timestamp_str, layer_id, log_level, message, details)
         )
 
 def select_layer_info(layer_id):

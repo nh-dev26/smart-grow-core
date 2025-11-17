@@ -6,10 +6,9 @@ import glob
 from database.db_manager import insert_camera_log, insert_system_log, select_layer_info
 from config import *
 
-def get_file_name():
+def get_file_name(job_timestamp):
     """ファイル名を生成（例: 20250910_100000.jpg）"""
-    now = datetime.datetime.now()
-    return now.strftime("%Y%m%d_%H%M%S.jpg")
+    return job_timestamp.strftime("%Y%m%d_%H%M%S.jpg")
 
 def save_image(frame, file_path):
     """画像をJPEG形式で保存"""
@@ -40,8 +39,11 @@ def execute_photo_job(layer_id: int):
     """
     指定された層 (layer_id) のカメラを起動し、撮影、保存、DB記録を行う。
     """
-    SAVE_DIR = os.path.join(BASE_SAVE_DIR, f"layer_{layer_id}")
     
+    job_timestamp = datetime.datetime.now()
+    job_timestamp_str = job_timestamp.isoformat()
+    SAVE_DIR = os.path.join(BASE_SAVE_DIR, f"layer_{layer_id}")
+        
     # 1. 保存ディレクトリを作成
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
@@ -54,7 +56,8 @@ def execute_photo_job(layer_id: int):
             layer_id=layer_id, 
             log_level='ERROR', 
             message=error_msg, 
-            details='Layer ID not found in layers table.')
+            details='Layer ID not found in layers table.',
+            timestamp_str=job_timestamp_str)
         print(f"エラー: {error_msg}")
         return
         
@@ -76,7 +79,8 @@ def execute_photo_job(layer_id: int):
             layer_id=layer_id, 
             log_level='ERROR', 
             message=error_msg, 
-            details=f'VideoCapture({camera_id}) failed to open.')
+            details=f'VideoCapture({camera_id}) failed to open.',
+            timestamp_str=job_timestamp_str)
         print(f"エラー: {error_msg}")
         return
 
@@ -85,7 +89,6 @@ def execute_photo_job(layer_id: int):
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_HEIGHT)
 
         ret, frame = cap.read()
-        cap.release() 
 
         if not ret:
             error_msg = f"Layer {layer_id} のフレーム読み込み失敗。"
@@ -93,22 +96,24 @@ def execute_photo_job(layer_id: int):
                 layer_id=layer_id, 
                 log_level='ERROR', 
                 message=error_msg, 
-                details='cap.read() returned False.')
+                details='cap.read() returned False.',
+                timestamp_str=job_timestamp_str)
             print(f"エラー: {error_msg}")
             return
         
-        file_name = get_file_name()
+        file_name = get_file_name(job_timestamp)
         relative_file_path = os.path.join(SAVE_DIR, file_name) 
         
         save_image(frame, relative_file_path)
         
-        insert_camera_log(layer_id, relative_file_path)
+        insert_camera_log(layer_id, job_timestamp_str, relative_file_path)
         
         insert_system_log(
             layer_id=layer_id, 
             log_level='INFO', 
             message='Camera job finished successfully.', 
-            details=f'Path: {relative_file_path}')
+            details=f'Path: {relative_file_path}',
+            timestamp_str=job_timestamp_str)
         
         delete_old_images(SAVE_DIR)
         
@@ -119,7 +124,8 @@ def execute_photo_job(layer_id: int):
             layer_id=layer_id, 
             log_level='ERROR', 
             message='Unexpected error during photo job.', 
-            details=str(e))
+            details=str(e),
+            timestamp_str=job_timestamp_str)
         print(f"[CRITICAL ERROR] Photo job failed: {e}")
     finally:
         if cap.isOpened():
