@@ -24,8 +24,9 @@ def open_db(db_path=None):
         
     except sqlite3.Error as e:
         print(f"DBエラー: {e}")
-        with open("db_error.log", "a") as f:
-            f.write(f"[{datetime.now()}] {e}\n")
+        # TODO:loggingモジュールを使ってログファイルにエラーを書き込む
+        # with open("db_error.log", "a") as f:
+        #     f.write(f"[{datetime.now()}] {e}\n")
         if conn:
             # エラー発生時にロールバック
             conn.rollback()

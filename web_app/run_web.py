@@ -8,4 +8,5 @@ app = create_app()
 
 if __name__ == '__main__':
     # 開発環境でのみ使用
+    # 本番環境で実行するコードからは「必ず」denug = Falseに
     app.run(host='0.0.0.0', port=8000, debug=True)
