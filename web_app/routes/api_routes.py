@@ -184,56 +184,162 @@ def api_ai_chat():
         return jsonify({'error': str(e)}), 500
 
 THRESHOLD_KEYS = [
-    "water_duration_sec",
-    "temp_high_threshold",
-    "temp_low_threshold",
-    "supply_low_threshold",
+    "water_duration_sec", 
+    "temp_high_threshold", 
+    "temp_low_threshold", 
+    "supply_low_threshold", 
     "drain_high_threshold",
-    "pump_gpio_sig",
-    "i2c_bus_num"
+    "pump_gpio_sig",    
+    "i2c_bus_num"       
 ]
-
-@api_bp.route('/settings/thresholds/reset', methods=['POST'])
-def reset_thresholds():
-    """制御・閾値設定をDBにリセットし、新しいデフォルト値を返す"""
-    
-    # 【ステップ1】DBリセットのロジックをここに挿入します
-    # 例: services.reset_thresholds_to_default()
-
-    # 【ステップ2】リセット後の値（＝デフォルト値）を抽出
-    default_thresholds = {
-        key: DEFAULT_SYSTEM_CONFIG[key]
-        for key in THRESHOLD_KEYS
-    }
-
-    # 【ステップ3】成功応答を返す
-    return jsonify({
-        "success": True,
-        "config": default_thresholds,
-        "message": "制御・閾値設定がデフォルトにリセットされました。"
-    })
 
 INTEGRATION_KEYS = [
-    "llm_model_name",
-    # "slack_webhook_url" は .env依存なので、UIからは扱わない想定
+    "llm_model_name"
 ]
+# 個別リセット可能な全てのキーを統合
+ALL_CONFIG_KEYS = THRESHOLD_KEYS + INTEGRATION_KEYS 
+
+# ------------------------------------------
+# 1. 設定保存 API
+# ------------------------------------------
+
+@api_bp.route('/settings/thresholds', methods=['POST'])
+def update_thresholds():
+    """制御・閾値設定 (ハードウェア設定を含む) をDBに保存する"""
+    try:
+        data = request.get_json()
+        
+        # 受け取ったデータから、THRESHOLD_KEYSに該当する項目のみを抽出
+        update_data = {key: data[key] for key in THRESHOLD_KEYS if key in data}
+        
+        # サービス層にDB更新を依頼
+        if services.update_system_config(update_data):
+            return jsonify({
+                "success": True, 
+                "message": "制御・閾値設定を正常に保存しました。"
+            })
+        else:
+            return jsonify({"success": False, "error": "DB更新処理に失敗しました。"}), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"制御・閾値設定の保存中にエラーが発生しました: {str(e)}"
+        }), 500
+
+@api_bp.route('/settings/integrations', methods=['POST'])
+def update_integrations():
+    """連携設定をDBに保存する"""
+    try:
+        data = request.get_json()
+        
+        # 受け取ったデータから、INTEGRATION_KEYSに該当する項目のみを抽出
+        update_data = {key: data[key] for key in INTEGRATION_KEYS if key in data}
+        
+        if services.update_system_config(update_data):
+            return jsonify({
+                "success": True, 
+                "message": "連携設定を正常に保存しました。"
+            })
+        else:
+            return jsonify({"success": False, "error": "DB更新処理に失敗しました。"}), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"連携設定の保存中にエラーが発生しました: {str(e)}"
+        }), 500
+
+# ------------------------------------------
+# 2. 全体リセット API
+# ------------------------------------------
+
+@api_bp.route('/settings/thresholds/reset', methods=['POST'])
+def reset_all_thresholds():
+    """制御・閾値設定（全て）をデフォルト値にリセットする"""
+    try:
+        # THRESHOLD_KEYS に該当する全てのキーとそのデフォルト値を取得
+        reset_data = {key: DEFAULT_SYSTEM_CONFIG[key] for key in THRESHOLD_KEYS}
+        
+        # サービス層にDB更新を依頼
+        if services.update_system_config(reset_data):
+            return jsonify({
+                "success": True, 
+                "message": "制御・閾値設定の全てがデフォルトにリセットされました。"
+            })
+        else:
+            return jsonify({"success": False, "error": "DBリセット処理に失敗しました。"}), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"制御・閾値の全体リセット中にエラーが発生しました: {str(e)}"
+        }), 500
 
 @api_bp.route('/settings/integrations/reset', methods=['POST'])
-def reset_integrations():
-    """連携設定をDBにリセットし、新しいデフォルト値を返す"""
-    
-    # 【ステップ1】DBリセットのロジックをここに挿入します
-    # 例: services.reset_integrations_to_default()
-    
-    # 【ステップ2】リセット後の値（＝デフォルト値）を抽出
-    default_integrations = {
-        key: DEFAULT_SYSTEM_CONFIG[key]
-        for key in INTEGRATION_KEYS
-    }
-    
-    # 【ステップ3】成功応答を返す
-    return jsonify({
-        "success": True,
-        "config": default_integrations,
-        "message": "連携設定がデフォルトにリセットされました。"
-    })
+def reset_all_integrations():
+    """連携設定（全て）をデフォルト値にリセットする"""
+    try:
+        # INTEGRATION_KEYS に該当する全てのキーとそのデフォルト値を取得
+        reset_data = {key: DEFAULT_SYSTEM_CONFIG[key] for key in INTEGRATION_KEYS}
+        
+        # サービス層にDB更新を依頼
+        if services.update_system_config(reset_data):
+            return jsonify({
+                "success": True, 
+                "message": "連携設定の全てがデフォルトにリセットされました。"
+            })
+        else:
+            return jsonify({"success": False, "error": "DBリセット処理に失敗しました。"}), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"連携設定の全体リセット中にエラーが発生しました: {str(e)}"
+        }), 500
+
+# ------------------------------------------
+# 3. 個別リセット API
+# ------------------------------------------
+
+# 既存の @api_bp.route('/settings/reset', methods=['POST']) を以下の内容に置き換えます
+
+@api_bp.route('/settings/reset', methods=['POST'])
+def reset_single_setting():
+    """
+    指定された単一キーの設定をデフォルト値にリセットする。
+    リクエストボディ: {"key": "water_duration_sec"}
+    """
+    try:
+        data = request.get_json()
+        target_key = data.get('key')
+        
+        if not target_key:
+            return jsonify({"success": False, "error": "キー名 (key) が指定されていません。"}), 400
+            
+        # ALL_CONFIG_KEYS を使用して、制御・閾値と連携設定のどちらもリセット可能にする
+        if target_key not in ALL_CONFIG_KEYS: 
+            return jsonify({"success": False, "error": f"キー '{target_key}' は設定項目として無効です。"}), 403
+            
+        default_value = DEFAULT_SYSTEM_CONFIG.get(target_key)
+        
+        if default_value is None:
+            return jsonify({"success": False, "error": f"キー '{target_key}' のデフォルト値が見つかりません。"}), 400
+            
+        # サービス関数を呼び出し、DBを更新
+        # 注: サービス関数の名前を services.update_single_system_config_key に修正して呼び出しています
+        if services.update_single_system_config_key(target_key, default_value):
+            return jsonify({
+                "success": True,
+                "key": target_key,
+                "default_value": default_value,
+                "message": f"'{target_key}' がデフォルト値にリセットされました。"
+            })
+        else:
+            return jsonify({"success": False, "error": "DB更新処理に失敗しました。"}), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"サーバーエラーが発生しました: {str(e)}"
+        }), 500

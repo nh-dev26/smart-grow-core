@@ -149,6 +149,64 @@ def toggle_schedule(schedule_id):
         cursor.execute("UPDATE schedules SET is_enabled = ? WHERE schedule_id = ?", (new_state, schedule_id))
         return bool(new_state)
 
+def update_system_config(data):
+    """
+    システム設定テーブルの複数の設定項目を一度に更新する。（保存・全体リセット用）
+    
+    Args:
+        data (dict): {カラム名: 値, ...} の形式の辞書。
+    Returns:
+        bool: 成功/失敗
+    """
+    if not data:
+        return True # 更新データがなければ成功として終了
+    
+    # SQL構築: UPDATE system_config SET col1=?, col2=?, ... WHERE id=1
+    columns = data.keys()
+    values = tuple(data.values())
+    
+    # SQLインジェクションを防ぐため、カラム名 (key) は呼び出し元で検証済みを前提とし、
+    # 値のみをパラメータとして渡します。
+    set_clauses = [f"{col} = ?" for col in columns]
+    sql = f"UPDATE system_config SET {', '.join(set_clauses)} WHERE config_id = 1"
+    
+    try:
+        with open_db() as conn: 
+            cursor = conn.cursor()
+            cursor.execute(sql, values)
+            return True
+    except Exception as e:
+        # ロギング
+        print(f"Error updating system config: {e}")
+        return False
+
+
+def update_single_system_config_key(key, value):
+    """
+    システム設定テーブルの単一カラムを指定の値に更新する。（個別リセット用）
+    
+    Args:
+        key (str): 更新するデータベースのカラム名。
+        value (any): 更新する値。
+    Returns:
+        bool: 成功/失敗
+    """
+    # 既存の update_single_system_config_default をリネーム (またはそのまま再利用)
+    # ここでは、より用途が明確な名前にリネームして定義します。
+    
+    # SQLインジェクションを防ぐため、カラム名（key）は信頼できるリスト
+    # でチェックされていることが前提です。
+    sql = f"UPDATE system_config SET {key} = ? WHERE config_id = 1"
+    
+    try:    
+        with open_db() as conn: 
+            cursor = conn.cursor()
+            cursor.execute(sql, (value,))
+            return True
+    except Exception as e:
+        print(f"Error updating single config key ({key}): {e}")
+        return False
+    
 def select_images(layer_id=1, limit=100):
     """画像一覧を取得する"""
     # core パッケージの file_manager から関数をインポートして使用

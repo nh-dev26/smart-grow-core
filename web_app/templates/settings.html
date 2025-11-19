@@ -25,23 +25,32 @@
                     <form id="threshold-form">
                         <h6 class="text-secondary mt-2 mb-3">水やり設定</h6>
                         <div class="mb-3">
-                            <label for="water_duration" class="form-label">給水時間（`water_duration_sec`）</label>
-                            <input type="number" class="form-control" id="water_duration" min="1" step="1" required>
-                            <div class="form-text">ポンプが動作する時間 (秒)。</div>
+                            <label for="water_duration_sec" class="form-label">給水時間（`water_duration_sec`）</label>
+                            <input type="number" class="form-control" id="water_duration_sec" min="1" step="1" required>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-text">ポンプが動作する時間 (秒)。</div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('water_duration_sec')"><i class="fas fa-undo"></i> リセット</button>
+                            </div>
                         </div>
                         <hr>
 
                         <h6 class="text-secondary mt-4 mb-3">環境温度閾値</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="temp_max" class="form-label">最高許容温度（`temp_high_threshold`）</label>
-                                <input type="number" class="form-control" id="temp_max" step="0.1" required>
-                                <div class="form-text">この温度を超えると警告を発します (℃)。</div>
+                                <label for="temp_high_threshold" class="form-label">最高許容温度（`temp_high_threshold`）</label>
+                                <input type="number" class="form-control" id="temp_high_threshold" step="0.1" required>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">この温度を超えると警告を発します (℃)。</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('temp_high_threshold')"><i class="fas fa-undo"></i> </button>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="temp_min" class="form-label">最低許容温度（`temp_low_threshold`）</label>
-                                <input type="number" class="form-control" id="temp_min" step="0.1" required>
-                                <div class="form-text">この温度を下回ると警告を発します (℃)。</div>
+                                <label for="temp_low_threshold" class="form-label">最低許容温度（`temp_low_threshold`）</label>
+                                <input type="number" class="form-control" id="temp_low_threshold" step="0.1" required>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">この温度を下回ると警告を発します (℃)。</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('temp_low_threshold')"><i class="fas fa-undo"></i></button>
+                                </div>
                             </div>
                         </div>
                         <hr>
@@ -49,14 +58,20 @@
                         <h6 class="text-secondary mt-4 mb-3">水圧閾値</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="supply_low" class="form-label">給水低下閾値（`supply_low_threshold`）</label>
-                                <input type="number" class="form-control" id="supply_low" step="0.1" required>
-                                <div class="form-text">この値未満で給水タンクの警告を発します (kPa)。</div>
+                                <label for="supply_low_threshold" class="form-label">給水低下閾値（`supply_low_threshold`）</label>
+                                <input type="number" class="form-control" id="supply_low_threshold" step="0.1" required>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">この値未満で給水タンクの警告を発します (kPa)。</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('supply_low_threshold')"><i class="fas fa-undo"></i></button>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="drain_high" class="form-label">排水高圧閾値（`drain_high_threshold`）</label>
-                                <input type="number" class="form-control" id="drain_high" step="0.1" required>
-                                <div class="form-text">この値を超えると排水タンクの警告を発します (kPa)。</div>
+                                <label for="drain_high_threshold" class="form-label">排水高圧閾値（`drain_high_threshold`）</label>
+                                <input type="number" class="form-control" id="drain_high_threshold" step="0.1" required>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">この値を超えると排水タンクの警告を発します (kPa)。</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('drain_high_threshold')"><i class="fas fa-undo"></i></button>
+                                </div>
                             </div>
                         </div>
                         <hr>
@@ -64,20 +79,26 @@
                         <h6 class="text-secondary mt-4 mb-3">ハードウェア接続設定</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="supply_low" class="form-label">水ポンプ GPIOピン (`pump_gpio_sig`)</label>
+                                <label for="pump_gpio_sig" class="form-label">水ポンプ GPIOピン (`pump_gpio_sig`)</label>
                                 <input type="number" class="form-control"id="pump_gpio_sig" min="0" step="1" required>
-                                <div class="form-text">水ポンプ制御リレーモジュールに接続されている**GPIOピン番号**を指定します</div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">水ポンプ制御リレーモジュールの**GPIOピン**</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('pump_gpio_sig')"><i class="fas fa-undo"></i></button>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="drain_high" class="form-label">I2C バス番号 (`i2c_bus_num`)</label>
+                                <label for="i2c_bus_num" class="form-label">I2C バス番号 (`i2c_bus_num`)</label>
                                 <input type="number" class="form-control" id="i2c_bus_num" min="0" step="1" required>
-                                <div class="form-text">I2C通信で使用する**バス番号**を指定します。（通常は 1 または 0）</div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="form-text">I2C通信で使用する**バス番号**</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('i2c_bus_num')"><i class="fas fa-undo"></i></button>
+                                </div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
                              <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
-                             <button type="button" class="btn btn-outline-secondary" id="reset-threshold-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
+                             <button type="button" class="btn btn-outline-secondary" id="reset-tresholds-btn"><i class="fas fa-undo"></i>  全体の値をリセット</button>
                         </div>
                     </form>
                 </div>
@@ -92,23 +113,25 @@
                 <div class="card-body">
                     <form id="integration-form">
                         
-
                         <div class="mb-3">
-                            <label for="llm_model" class="form-label">LLMモデル名（`llm_model_name`）</label>
+                            <label for="llm_model_name" class="form-label">LLMモデル名（`llm_model_name`）</label>
                             
-                            <select class="form-select" id="llm_model" required>
+                            <select class="form-select" id="llm_model_name" required>
                                 <option value="gpt-4-turbo">GPT-4 Turbo (互換性・強力)</option>
                                 <option value="gemini-2.5-flash" selected>Gemini Flash (高速・低コスト)</option>
                                 <option value="gemini-2.5-pro">Gemini Pro (高性能・複雑なタスク)</option>
                                 <option value="gemini-1.5-flash">Gemini 1.5 Flash (旧モデル互換)</option>
                             </select>
                             
-                            <div class="form-text">チャット応答などに使用するモデルの識別名。</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-text">チャット応答などに使用するモデルの識別名。</div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="handleSingleReset('llm_model_name')"><i class="fas fa-undo"></i></button>
+                            </div>
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
                              <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
-                             <button type="button" class="btn btn-outline-secondary" id="reset-integration-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
+                             <button type="button" class="btn btn-outline-secondary" id="reset-integrations-btn"><i class="fas fa-undo"></i> 全体の値をリセット</button>
                         </div>
                     </form>
                 </div>
