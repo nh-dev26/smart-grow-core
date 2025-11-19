@@ -188,7 +188,9 @@ THRESHOLD_KEYS = [
     "temp_high_threshold",
     "temp_low_threshold",
     "supply_low_threshold",
-    "drain_high_threshold"
+    "drain_high_threshold",
+    "pump_gpio_sig",
+    "i2c_bus_num"
 ]
 
 @api_bp.route('/settings/thresholds/reset', methods=['POST'])

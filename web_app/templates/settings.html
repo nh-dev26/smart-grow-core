@@ -59,7 +59,22 @@
                                 <div class="form-text">この値を超えると排水タンクの警告を発します (kPa)。</div>
                             </div>
                         </div>
+                        <hr>
                         
+                        <h6 class="text-secondary mt-4 mb-3">ハードウェア接続設定</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="supply_low" class="form-label">水ポンプ GPIOピン (`pump_gpio_sig`)</label>
+                                <input type="number" class="form-control"id="pump_gpio_sig" min="0" step="1" required>
+                                <div class="form-text">水ポンプ制御リレーモジュールに接続されている**GPIOピン番号**を指定します</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="drain_high" class="form-label">I2C バス番号 (`i2c_bus_num`)</label>
+                                <input type="number" class="form-control" id="i2c_bus_num" min="0" step="1" required>
+                                <div class="form-text">I2C通信で使用する**バス番号**を指定します。（通常は 1 または 0）</div>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-end mt-4">
                              <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
                              <button type="button" class="btn btn-outline-secondary" id="reset-threshold-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>

@@ -27,6 +27,8 @@ async function loadSettings() {
         document.getElementById('temp_min').value = settings.temp_low_threshold || 0;
         document.getElementById('supply_low').value = settings.supply_low_threshold || 0;
         document.getElementById('drain_high').value = settings.drain_high_threshold || 0;
+        document.getElementById('pump_gpio_sig').value = settings.pump_gpio_sig || 0;
+        document.getElementById('i2c_bus_num').value = settings.i2c_bus_num || 0;
 
         // 連携設定をセット
         document.getElementById('llm_model').value = settings.llm_model_name || '';
@@ -50,7 +52,9 @@ async function handleThresholdSubmit(e) {
         temp_high_threshold: parseFloat(document.getElementById('temp_max').value),
         temp_low_threshold: parseFloat(document.getElementById('temp_min').value),
         supply_low_threshold: parseFloat(document.getElementById('supply_low').value),
-        drain_high_threshold: parseFloat(document.getElementById('drain_high').value)
+        drain_high_threshold: parseFloat(document.getElementById('drain_high').value),
+        pump_gpio_sig: parseInt(document.getElementById('pump_gpio_sig').value),
+        i2c_bus_num: parseInt(document.getElementById('i2c_bus_num').value)
     };
     
     await saveSettings(API_URLS.updateThreshold, data, '制御・閾値設定');
