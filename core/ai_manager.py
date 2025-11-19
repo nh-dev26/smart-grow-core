@@ -1,5 +1,7 @@
 from config import LLM_API_KEY
 import google.generativeai as genai
+#最新バージョンの場合import文は以下のようになります
+#import google.genai as genai
 import io
 from pathlib import Path
 from datetime import datetime
