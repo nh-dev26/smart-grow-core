@@ -1,7 +1,7 @@
-# web_api_bp/routes/api_routes.py
 from flask import Blueprint, jsonify, request, current_app
 from datetime import datetime
-from .. import services
+from web_app import services
+from config import DEFAULT_SYSTEM_CONFIG
 
 # Blueprintを定義。URLプレフィックスは '/api' に設定
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -182,3 +182,56 @@ def api_ai_chat():
     except Exception as e:
         print(f"API エラー: {e}")
         return jsonify({'error': str(e)}), 500
+
+THRESHOLD_KEYS = [
+    "water_duration_sec",
+    "temp_high_threshold",
+    "temp_low_threshold",
+    "supply_low_threshold",
+    "drain_high_threshold"
+]
+
+@api_bp.route('/settings/thresholds/reset', methods=['POST'])
+def reset_thresholds():
+    """制御・閾値設定をDBにリセットし、新しいデフォルト値を返す"""
+    
+    # 【ステップ1】DBリセットのロジックをここに挿入します
+    # 例: services.reset_thresholds_to_default()
+
+    # 【ステップ2】リセット後の値（＝デフォルト値）を抽出
+    default_thresholds = {
+        key: DEFAULT_SYSTEM_CONFIG[key]
+        for key in THRESHOLD_KEYS
+    }
+
+    # 【ステップ3】成功応答を返す
+    return jsonify({
+        "success": True,
+        "config": default_thresholds,
+        "message": "制御・閾値設定がデフォルトにリセットされました。"
+    })
+
+INTEGRATION_KEYS = [
+    "llm_model_name",
+    # "slack_webhook_url" は .env依存なので、UIからは扱わない想定
+]
+
+@api_bp.route('/settings/integrations/reset', methods=['POST'])
+def reset_integrations():
+    """連携設定をDBにリセットし、新しいデフォルト値を返す"""
+    
+    # 【ステップ1】DBリセットのロジックをここに挿入します
+    # 例: services.reset_integrations_to_default()
+    
+    # 【ステップ2】リセット後の値（＝デフォルト値）を抽出
+    default_integrations = {
+        key: DEFAULT_SYSTEM_CONFIG[key]
+        for key in INTEGRATION_KEYS
+    }
+    
+    # 【ステップ3】成功応答を返す
+    return jsonify({
+        "success": True,
+        "config": default_integrations,
+        "message": "連携設定がデフォルトにリセットされました。"
+    })

@@ -19,7 +19,7 @@
         <div class="col-12 col-lg-7">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-microchip text-success"></i> 制御・動作閾値</h5>
+                    <h5 class="card-title mb-0"><i class="fas fa-microchip text-success"></i> 制御・閾値</h5>
                 </div>
                 <div class="card-body">
                     <form id="threshold-form">
@@ -29,7 +29,6 @@
                             <input type="number" class="form-control" id="water_duration" min="1" step="1" required>
                             <div class="form-text">ポンプが動作する時間 (秒)。</div>
                         </div>
-
                         <hr>
 
                         <h6 class="text-secondary mt-4 mb-3">環境温度閾値</h6>
@@ -45,7 +44,6 @@
                                 <div class="form-text">この温度を下回ると警告を発します (℃)。</div>
                             </div>
                         </div>
-
                         <hr>
 
                         <h6 class="text-secondary mt-4 mb-3">水圧閾値</h6>
@@ -63,7 +61,7 @@
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 制御設定を保存</button>
+                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
                              <button type="button" class="btn btn-outline-secondary" id="reset-threshold-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
                         </div>
                     </form>
@@ -74,18 +72,27 @@
         <div class="col-12 col-lg-5">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-robot text-primary"></i> 連携設定</h5>
+                    <h5 class="card-title mb-0"><i class="fas fa-robot text-primary"></i> LLM設定</h5>
                 </div>
                 <div class="card-body">
                     <form id="integration-form">
+                        
+
                         <div class="mb-3">
                             <label for="llm_model" class="form-label">LLMモデル名（`llm_model_name`）</label>
-                            <input type="text" class="form-control" id="llm_model" required>
+                            
+                            <select class="form-select" id="llm_model" required>
+                                <option value="gpt-4-turbo">GPT-4 Turbo (互換性・強力)</option>
+                                <option value="gemini-2.5-flash" selected>Gemini Flash (高速・低コスト)</option>
+                                <option value="gemini-2.5-pro">Gemini Pro (高性能・複雑なタスク)</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash (旧モデル互換)</option>
+                            </select>
+                            
                             <div class="form-text">チャット応答などに使用するモデルの識別名。</div>
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 連携設定を保存</button>
+                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
                              <button type="button" class="btn btn-outline-secondary" id="reset-integration-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
                         </div>
                     </form>
@@ -97,6 +104,6 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 {% endblock %}

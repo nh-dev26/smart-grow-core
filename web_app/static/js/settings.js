@@ -2,7 +2,7 @@
 
 // APIエンドポイントの定義
 const API_URLS = {
-    fetch: '/api/settings/current',                     // GET: 全設定取得
+    fetch: '/api/system-config',                     // GET: 全設定取得
     updateThreshold: '/api/settings/thresholds',        // POST: 制御・閾値設定の更新
     resetThreshold: '/api/settings/thresholds/reset',   // POST: 制御・閾値設定のリセット
     updateIntegration: '/api/settings/integrations',    // POST: 連携設定の更新
@@ -17,7 +17,9 @@ async function loadSettings() {
         const response = await fetch(API_URLS.fetch);
         if (!response.ok) throw new Error('設定データの取得に失敗しました。');
         
-        const settings = await response.json();
+        const settings_json = await response.json();
+        settings = settings_json.config || {};
+        console.log(settings)
         
         // 制御・閾値設定をセット
         document.getElementById('water_duration').value = settings.water_duration_sec || 0;
