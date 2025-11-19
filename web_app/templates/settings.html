@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}設定 - Smart Grow System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6"><i class="fas fa-cog text-success"></i> システム設定</h1>
+            <p class="text-muted">システムの動作パラメータと連携設定を変更します</p>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col" id="message-area"></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-microchip text-success"></i> 制御・動作閾値</h5>
+                </div>
+                <div class="card-body">
+                    <form id="threshold-form">
+                        <h6 class="text-secondary mt-2 mb-3">水やり設定</h6>
+                        <div class="mb-3">
+                            <label for="water_duration" class="form-label">給水時間（`water_duration_sec`）</label>
+                            <input type="number" class="form-control" id="water_duration" min="1" step="1" required>
+                            <div class="form-text">ポンプが動作する時間 (秒)。</div>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="text-secondary mt-4 mb-3">環境温度閾値</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="temp_max" class="form-label">最高許容温度（`temp_high_threshold`）</label>
+                                <input type="number" class="form-control" id="temp_max" step="0.1" required>
+                                <div class="form-text">この温度を超えると警告を発します (℃)。</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="temp_min" class="form-label">最低許容温度（`temp_low_threshold`）</label>
+                                <input type="number" class="form-control" id="temp_min" step="0.1" required>
+                                <div class="form-text">この温度を下回ると警告を発します (℃)。</div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="text-secondary mt-4 mb-3">水圧閾値</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="supply_low" class="form-label">給水低下閾値（`supply_low_threshold`）</label>
+                                <input type="number" class="form-control" id="supply_low" step="0.1" required>
+                                <div class="form-text">この値未満で給水タンクの警告を発します (kPa)。</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="drain_high" class="form-label">排水高圧閾値（`drain_high_threshold`）</label>
+                                <input type="number" class="form-control" id="drain_high" step="0.1" required>
+                                <div class="form-text">この値を超えると排水タンクの警告を発します (kPa)。</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 制御設定を保存</button>
+                             <button type="button" class="btn btn-outline-secondary" id="reset-threshold-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-robot text-primary"></i> 連携設定</h5>
+                </div>
+                <div class="card-body">
+                    <form id="integration-form">
+                        <div class="mb-3">
+                            <label for="llm_model" class="form-label">LLMモデル名（`llm_model_name`）</label>
+                            <input type="text" class="form-control" id="llm_model" required>
+                            <div class="form-text">チャット応答などに使用するモデルの識別名。</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                             <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 連携設定を保存</button>
+                             <button type="button" class="btn btn-outline-secondary" id="reset-integration-btn"><i class="fas fa-undo"></i> デフォルトに戻す</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}
