@@ -25,61 +25,6 @@
         </div>
     </div>
 
-    <!-- クイックアクションボタン -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body py-2">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <small class="text-muted me-2">⚡ クイック質問:</small>
-                        <button class="btn btn-sm btn-outline-success quick-action-btn" data-question="現在の成長率を分析してください">
-                            <i class="fas fa-seedling"></i> 成長率分析
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning quick-action-btn" data-question="収穫時期を判断してください">
-                            <i class="fas fa-cut"></i> 収穫判断
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger quick-action-btn" data-question="病気や異常がないかチェックしてください">
-                            <i class="fas fa-stethoscope"></i> 病気診断
-                        </button>
-                        <button class="btn btn-sm btn-outline-info quick-action-btn" data-question="栽培のアドバイスをください">
-                            <i class="fas fa-lightbulb"></i> 栽培アドバイス
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 現在のセンサー情報 
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body py-2">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <small class="text-muted me-3">
-                            <i class="fas fa-info-circle"></i> 現在のシステム情報:
-                        </small>
-                        <div class="d-flex gap-3 flex-wrap">
-                            <span id="sensor-temp-display">
-                                <i class="fas fa-temperature-high text-danger"></i>
-                                <strong>温度:</strong> <span class="text-muted">読み込み中...</span>
-                            </span>
-                            <span id="sensor-humid-display">
-                                <i class="fas fa-tint text-info"></i>
-                                <strong>湿度:</strong> <span class="text-muted">読み込み中...</span>
-                            </span>
-                            <span id="sensor-time-display">
-                                <i class="fas fa-clock text-warning"></i>
-                                <strong>測定:</strong> <span class="text-muted">N/A</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
--->
-
     <!-- チャットエリア -->
     <div class="row">
         <div class="col-12">
@@ -134,6 +79,23 @@
                             </div>
                         </div>
                     </form>
+
+                    <div id="quick-action-container" class="d-none mt-2">
+                        <small class="text-muted me-2">⚡ クイック質問:</small>
+                        <button class="btn btn-sm btn-outline-success quick-action-btn" data-question="現在の成長率を分析してください">
+                            <i class="fas fa-seedling"></i> 成長率分析
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning quick-action-btn" data-question="収穫時期を判断してください">
+                            <i class="fas fa-cut"></i> 収穫判断
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger quick-action-btn" data-question="病気や異常がないかチェックしてください">
+                            <i class="fas fa-stethoscope"></i> 病気診断
+                        </button>
+                        <button class="btn btn-sm btn-outline-info quick-action-btn" data-question="栽培のアドバイスをください">
+                            <i class="fas fa-lightbulb"></i> 栽培アドバイス
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -162,11 +162,21 @@ def api_ai_chat():
         user_message = data.get('message', '')
         image_filename = data.get('image_filename')
         sensor_data = data.get('sensor_data', {})
+        # 💡 修正点 1: quick_action_type をリクエストボディから取得
+        quick_action_type = data.get('quick_action_type', None) 
         
-        if not user_message:
+        if not user_message and not quick_action_type:
+            # ユーザーメッセージもクイック質問の指定もない場合はエラー
             return jsonify({'error': 'メッセージが空です'}), 400
         
-        ai_response = services.process_ai_chat(user_message, image_filename, sensor_data, current_app.root_path)
+        # 💡 修正点 2: services.process_ai_chat に quick_action_type を渡す
+        ai_response = services.process_ai_chat(
+            user_message, 
+            image_filename, 
+            sensor_data, 
+            current_app.root_path,
+            quick_action_type  # 新しい引数
+        )
         
         return jsonify({
             'response': ai_response,

@@ -1,552 +1,309 @@
-// AI Chat JavaScript
+let imageSelectModal = null; // bootstrap modal instance
+let imagesByDate = {};
+let allChatImages = [];
+let selectedImageFilename = null; // 送信対象
+let tempSelectedImage = null; // モーダル内一時選択
 
-// グローバル変数
-let currentSensorData = null;
-let imageSelectModal = null; // 画像選択モーダル
-let imagesByDate = {}; // 日付ごとの画像データ
-let allChatImages = []; // 全画像データ
-let selectedImageFilename = null; // 選択された画像のファイル名
-let tempSelectedImage = null; // モーダル内で一時的に選択中の画像
+document.addEventListener('DOMContentLoaded', function () {
+    const modalEl = document.getElementById('imageSelectModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        imageSelectModal = new bootstrap.Modal(modalEl);
+    }
 
-// ページ読み込み時の初期化
-document.addEventListener('DOMContentLoaded', function() {
-    // モーダル初期化
-    imageSelectModal = new bootstrap.Modal(document.getElementById('imageSelectModal'));
-    
-    // イベントリスナー設定
     setupEventListeners();
-    
-    // 画像リストを読み込み
     loadImageList();
-    
-    // センサーデータを読み込み（初回）
-    loadSensorData();
-    
-    // センサーデータを定期的に更新（30秒ごと）
-    setInterval(loadSensorData, 30000);
-    
-    // Marked.jsの設定
-    marked.setOptions({
-        breaks: true,
-        gfm: true,
-        highlight: function(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-                return hljs.highlight(code, { language: lang }).value;
+
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function (code, lang) {
+                try {
+                    if (lang && hljs.getLanguage(lang)) {
+                        return hljs.highlight(code, { language: lang }).value;
+                    }
+                    return hljs.highlightAuto(code).value;
+                } catch (e) {
+                    return code;
+                }
             }
-            return hljs.highlightAuto(code).value;
-        }
-    });
+        });
+    }
 });
 
-// イベントリスナーの設定
 function setupEventListeners() {
-    // チャットフォーム送信
-    document.getElementById('chat-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        sendMessage();
-    });
-    
-    // クイックアクションボタン
-    document.querySelectorAll('.quick-action-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const question = this.getAttribute('data-question');
-            document.getElementById('user-input').value = question;
-            sendMessage();
+    const chatForm = document.getElementById('chat-form');
+    if (chatForm) {
+        chatForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            sendMessage(null);
         });
-    });
-    
-    // 画像添付ボタン
-    document.getElementById('attach-image-btn').addEventListener('click', function() {
-        openImageSelectModal();
-    });
-    
-    // 画像削除ボタン
-    document.getElementById('remove-image-btn').addEventListener('click', function() {
-        removeAttachedImage();
-    });
-    
-    // モーダル内の選択確定ボタン
-    document.getElementById('confirm-select-btn').addEventListener('click', function() {
-        confirmImageSelection();
-    });
-    
-    // サムネイルクリックで拡大表示
-    document.getElementById('attached-image-thumb').addEventListener('click', function() {
-        if (this.src) {
-            window.open(this.src, '_blank');
-        }
-    });
-}
+    }
 
-// 画像リストの読み込み（カレンダー用）
-async function loadImageList() {
-    try {
-        // Layer 1の画像を取得
-        const response = await fetch('/api/images?layer_id=1');
-        const data = await response.json();
-        
-        allChatImages = data.images || [];
-        imagesByDate = {};
-        
-        // 日付ごとにグループ化
-        allChatImages.forEach(img => {
-            const date = img.timestamp.split('T')[0]; // YYYY-MM-DD
-            if (!imagesByDate[date]) {
-                imagesByDate[date] = [];
-            }
-            imagesByDate[date].push(img);
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.quick-action-btn');
+        if (!btn) return;
+        const question = btn.getAttribute('data-question') || '';
+        const quickActionType = btn.getAttribute('data-action-type') || null;
+        const input = document.getElementById('user-input');
+        if (input) input.value = question;
+        sendMessage(quickActionType);
+    });
+
+    const attachBtn = document.getElementById('attach-image-btn');
+    if (attachBtn) attachBtn.addEventListener('click', openImageSelectModal);
+
+    const removeBtn = document.getElementById('remove-image-btn');
+    if (removeBtn) removeBtn.addEventListener('click', removeAttachedImage);
+
+    const confirmBtn = document.getElementById('confirm-select-btn');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmImageSelection);
+
+    const thumb = document.getElementById('attached-image-thumb');
+    if (thumb) {
+        thumb.addEventListener('click', function () {
+            if (this.src) window.open(this.src, '_blank');
         });
-        
-    } catch (error) {
-        console.error('画像リスト読み込みエラー:', error);
+    }
+
+    // クイック質問ボタン
+    const quickBtn = document.getElementById('quick-question-btn');
+    if (quickBtn) {
+        quickBtn.addEventListener('click', async () => {
+            if (!selectedImageFilename) return;
+            const input = document.getElementById('user-input');
+            if (input) input.value = '';
+            await sendMessage('quick_image');
+            quickBtn.style.display = 'none';
+        });
     }
 }
 
-// 画像選択モーダルを開く
-function openImageSelectModal() {
-    // カレンダーを描画
-    renderModalCalendar();
-    
-    // モーダルを表示
-    imageSelectModal.show();
+// 画像リスト取得
+async function loadImageList() {
+    try {
+        const res = await fetch('/api/images?layer_id=1');
+        if (!res.ok) throw new Error(`画像一覧取得失敗: ${res.status}`);
+        const data = await res.json();
+        allChatImages = Array.isArray(data.images) ? data.images : [];
+        imagesByDate = {};
+        allChatImages.forEach(img => {
+            if (!img.timestamp || !img.filename) return;
+            const date = img.timestamp.split('T')[0];
+            if (!imagesByDate[date]) imagesByDate[date] = [];
+            imagesByDate[date].push(img);
+        });
+    } catch (err) {
+        console.error('loadImageList error:', err);
+        allChatImages = [];
+        imagesByDate = {};
+    }
 }
 
-// モーダル用カレンダーの描画
+// モーダル開く
+function openImageSelectModal() {
+    renderModalCalendar();
+    if (imageSelectModal) imageSelectModal.show();
+}
+
+// カレンダー描画
 function renderModalCalendar() {
     const container = document.getElementById('modal-calendar');
-    
-    // 最新の画像の日付を取得
-    const latestDate = allChatImages.length > 0 ? new Date(allChatImages[0].timestamp) : new Date();
+    if (!container) return;
+    const latestDate = (allChatImages.length > 0 && allChatImages[0].timestamp)
+        ? new Date(allChatImages[0].timestamp)
+        : new Date();
     const year = latestDate.getFullYear();
     const month = latestDate.getMonth();
-    
-    // カレンダーHTML
-    let html = `
-        <div class="text-center mb-2">
-            <strong>${year}年${month + 1}月</strong>
-        </div>
-        <div class="mini-calendar-grid">
-    `;
-    
-    // 曜日ヘッダー
-    const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
-    weekDays.forEach(day => {
+
+    let html = `<div class="text-center mb-2"><strong>${year}年${month+1}月</strong></div><div class="mini-calendar-grid">`;
+    ['日','月','火','水','木','金','土'].forEach(day => {
         html += `<div class="mini-cal-header">${day}</div>`;
     });
-    
-    // 月の最初の日と最後の日
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
-    // 空白セル
-    for (let i = 0; i < startDayOfWeek; i++) {
-        html += `<div class="mini-cal-day"></div>`;
-    }
-    
-    // 日付セル
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const hasImage = imagesByDate[dateStr] && imagesByDate[dateStr].length > 0;
+
+    for (let i=0;i<startDayOfWeek;i++) html += `<div class="mini-cal-day empty"></div>`;
+    for (let day=1; day<=daysInMonth; day++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const hasImage = imagesByDate[dateStr] && imagesByDate[dateStr].length>0;
         const isToday = dateStr === new Date().toISOString().split('T')[0];
-        
         let className = 'mini-cal-day';
         if (hasImage) className += ' has-image';
         if (isToday) className += ' today';
-        
-        html += `<div class="${className}" onclick="selectDateInModal('${dateStr}')">${day}</div>`;
+        html += `<div class="${className}" data-date="${dateStr}">${day}</div>`;
     }
-    
     html += `</div>`;
     container.innerHTML = html;
-}
 
-// モーダル内で日付選択
-function selectDateInModal(dateStr) {
-    const images = imagesByDate[dateStr];
-    if (!images || images.length === 0) {
-        return; // 画像がない日はクリックしても何もしない
-    }
-    
-    // 最初の画像を一時選択
-    tempSelectedImage = images[0];
-    
-    // プレビュー表示
+    container.querySelectorAll('.mini-cal-day').forEach(el=>{
+        const date = el.getAttribute('data-date');
+        if(!date) return;
+        if(imagesByDate[date] && imagesByDate[date].length>0){
+            el.classList.add('clickable');
+            el.addEventListener('click',function(ev){
+                selectDateInModal(date, ev.currentTarget);
+            });
+        } else el.classList.remove('clickable');
+    });
+
     const preview = document.getElementById('modal-image-preview');
-    const previewImg = document.getElementById('modal-preview-image');
-    const dateDisplay = document.getElementById('modal-preview-date');
-    
-    previewImg.src = `/plant_images/layer_1/${tempSelectedImage.filename}`;
-    dateDisplay.textContent = new Date(tempSelectedImage.timestamp).toLocaleDateString('ja-JP');
-    preview.style.display = 'block';
-    
-    // 選択ボタンを有効化
-    document.getElementById('confirm-select-btn').disabled = false;
-    
-    // カレンダーの選択状態を更新
-    document.querySelectorAll('.mini-cal-day').forEach(el => el.classList.remove('selected'));
-    event.target.classList.add('selected');
-}
-
-// 画像選択を確定
-function confirmImageSelection() {
-    if (!tempSelectedImage) return;
-    
-    // 選択を確定
-    selectedImageFilename = tempSelectedImage.filename;
-    
-    // 添付画像プレビューを表示
-    const preview = document.getElementById('attached-image-preview');
-    const thumb = document.getElementById('attached-image-thumb');
-    const dateDisplay = document.getElementById('attached-image-date');
-    
-    thumb.src = `/plant_images/layer_1/${selectedImageFilename}`;
-    dateDisplay.textContent = new Date(tempSelectedImage.timestamp).toLocaleDateString('ja-JP');
-    preview.style.display = 'block';
-    
-    // モーダルを閉じる
-    imageSelectModal.hide();
-    
-    // 一時選択をクリア
+    if(preview) preview.style.display='none';
+    const confirmBtn = document.getElementById('confirm-select-btn');
+    if(confirmBtn) confirmBtn.disabled=true;
     tempSelectedImage = null;
 }
 
-// 添付画像を削除
+// 日付選択
+function selectDateInModal(dateStr, clickedEl) {
+    const images = imagesByDate[dateStr];
+    if(!images || images.length===0) return;
+    tempSelectedImage = images[0];
+
+    const preview = document.getElementById('modal-image-preview');
+    const previewImg = document.getElementById('modal-preview-image');
+    const dateDisplay = document.getElementById('modal-preview-date');
+    if(previewImg) previewImg.src = `/plant_images/layer_1/${tempSelectedImage.filename}`;
+    if(dateDisplay) dateDisplay.textContent = new Date(tempSelectedImage.timestamp).toLocaleDateString('ja-JP');
+    if(preview) preview.style.display='block';
+
+    const confirmBtn = document.getElementById('confirm-select-btn');
+    if(confirmBtn) confirmBtn.disabled=false;
+
+    const container = document.getElementById('modal-calendar');
+    if(container){
+        container.querySelectorAll('.mini-cal-day').forEach(el=>el.classList.remove('selected'));
+    }
+    if(clickedEl) clickedEl.classList.add('selected');
+}
+
+// 添付削除
 function removeAttachedImage() {
     selectedImageFilename = null;
-    document.getElementById('attached-image-preview').style.display = 'none';
-    document.getElementById('attached-image-thumb').src = '';
+
+    const preview = document.getElementById('attached-image-preview');
+    const thumb = document.getElementById('attached-image-thumb');
+    if (thumb) thumb.src = '';
+    if (preview) preview.style.display = 'none';
+
+    // ▼ クイック質問 全部まとめて非表示にする
+    const quickActions = document.getElementById('quick-action-container');
+    if (quickActions) quickActions.classList.add('d-none');
 }
 
-// センサーデータの読み込み
-async function loadSensorData() {
-    try {
-        const response = await fetch('/api/dashboard-data?layer_id=1');
-        const data = await response.json();
-        
-        // sensor_dataオブジェクトを取得
-        const sensorData = data.sensor_data || {};
-        currentSensorData = sensorData;
-        
-        // システム情報表示エリアを更新
-        updateSensorDisplay(sensorData);
-        
-    } catch (error) {
-        console.error('センサーデータ読み込みエラー:', error);
-    }
-}
-
-// システム情報表示エリアを更新
-// function updateSensorDisplay(sensorData) {
-//     // 温度表示を更新
-//     const tempDisplay = document.getElementById('sensor-temp-display');
-//     if (tempDisplay) {
-//         const temp = (sensorData.temperature !== null && sensorData.temperature !== undefined) 
-//             ? `${sensorData.temperature}℃` : 'N/A';
-//         tempDisplay.innerHTML = `
-//             <i class="fas fa-temperature-high text-danger"></i>
-//             <strong>温度:</strong> ${temp}
-//         `;
-//     }
-    
-//     // 湿度表示を更新
-//     const humidDisplay = document.getElementById('sensor-humid-display');
-//     if (humidDisplay) {
-//         const humid = (sensorData.humidity !== null && sensorData.humidity !== undefined) 
-//             ? `${sensorData.humidity}%` : 'N/A';
-//         humidDisplay.innerHTML = `
-//             <i class="fas fa-tint text-info"></i>
-//             <strong>湿度:</strong> ${humid}
-//         `;
-//     }
-    
-//     // 測定時刻表示を更新
-//     const timeDisplay = document.getElementById('sensor-time-display');
-//     if (timeDisplay) {
-//         let timeStr = 'N/A';
-//         if (sensorData.timestamp) {
-//             const dt = new Date(sensorData.timestamp);
-//             timeStr = dt.toLocaleString('ja-JP', {
-//                 month: 'short',
-//                 day: 'numeric',
-//                 hour: '2-digit',
-//                 minute: '2-digit'
-//             });
-//         }
-//         timeDisplay.innerHTML = `
-//             <i class="fas fa-clock text-warning"></i>
-//             <strong>測定:</strong> ${timeStr}
-//         `;
-//     }
-// }
-
-// システムメッセージ（送信データ）を追加
-function addSystemMessage(sensorData, imagePath) {
-    const chatContainer = document.getElementById('chat-container');
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'system-message';
-    
-    // 画像情報
-    let imageHTML = '';
-    if (imagePath) {
-        imageHTML = `
-            <div class="data-item">
-                <img src="/plant_images/layer_1/${imagePath}" class="rounded mb-2" style="max-width: 120px; max-height: 80px; object-fit: cover; display: block;">
-                <small class="text-muted">📷 ${imagePath}</small>
-            </div>
-        `;
-    }
-    
-    // センサーデータ（null/undefinedチェックに変更して0を許容）
-    // 注意: タンク圧力データは植物成長に直接関係ないため除外
-    const temp = (sensorData.temperature !== null && sensorData.temperature !== undefined) ? `${sensorData.temperature}℃` : 'N/A';
-    const humid = (sensorData.humidity !== null && sensorData.humidity !== undefined) ? `${sensorData.humidity}%` : 'N/A';
-    
-    // 測定時刻
-    let timeStr = 'N/A';
-    if (sensorData.timestamp) {
-        const dt = new Date(sensorData.timestamp);
-        timeStr = dt.toLocaleString('ja-JP', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-    
-    messageDiv.innerHTML = `
-        <div class="system-bubble">
-            <div class="system-header">
-                <i class="fas fa-chart-bar"></i>
-                <span>以下のデータで分析中...</span>
-            </div>
-            <div class="system-content">
-                ${imageHTML}
-                <div class="data-row">
-                    <div class="data-item">
-                        <i class="fas fa-temperature-high text-danger"></i>
-                        <span>${temp}</span>
-                    </div>
-                    <div class="data-item">
-                        <i class="fas fa-tint text-info"></i>
-                        <span>${humid}</span>
-                    </div>
-                </div>
-                <div class="data-row">
-                    <div class="data-item">
-                        <i class="fas fa-clock text-warning"></i>
-                        <span>測定: ${timeStr}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    chatContainer.appendChild(messageDiv);
-    scrollToBottom();
-}
-
-
-// メッセージ送信
-async function sendMessage() {
-    const input = document.getElementById('user-input');
-    const message = input.value.trim();
-    
-    if (!message) {
-        return;
-    }
-    
-    const sendBtn = document.getElementById('send-btn');
-    
-    // ユーザーメッセージを表示
-    addUserMessage(message, selectedImageFilename);
-    
-    // 📎 画像プレビューを即座に削除（送信直後）
-    removeAttachedImage();
-    
-    // 入力欄をクリア
-    input.value = '';
-    
-    // 送信ボタンを無効化
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 送信中...';
-    
-    try {
-        // 🔥 送信直前に最新のセンサーデータを取得
-        await loadSensorData();
-        
-        // センサーデータからタンク圧力を除外（測定時刻は保持）
-        const sensorDataWithoutTank = currentSensorData ? {
-            temperature: currentSensorData.temperature,
-            humidity: currentSensorData.humidity,
-            timestamp: currentSensorData.timestamp
-        } : null;
-        
-        // システムメッセージ（送信データ）を表示（タンク圧力なし）
-        addSystemMessage(sensorDataWithoutTank, selectedImageFilename);
-        
-        // タイピングインジケーター表示
-        showTypingIndicator();
-        
-        // APIリクエスト
-        const requestData = {
-            message: message,
-            image_filename: selectedImageFilename || null,
-            sensor_data: sensorDataWithoutTank
-        };
-        
-        const response = await fetch('/api/ai-chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // タイピングインジケーターを削除
-        removeTypingIndicator();
-        
-        // エラーレスポンスの場合
-        if (data.error) {
-            addAIMessage(`⚠️ **エラー**\n\n${data.error}`);
-        } else {
-            // AIメッセージを表示
-            addAIMessage(data.response);
-        }
-        
-    } catch (error) {
-        console.error('メッセージ送信エラー:', error);
-        removeTypingIndicator();
-        addAIMessage('⚠️ **エラー**\n\n申し訳ございません。予期しないエラーが発生しました。もう一度お試しください。');
-    } finally {
-        // 送信ボタンを有効化
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 送信';
-    }
-}
-
-// ユーザーメッセージを追加
+// ユーザーメッセージ追加
 function addUserMessage(message, imagePath) {
     const chatContainer = document.getElementById('chat-container');
-    
+    if(!chatContainer) return;
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'message user-message';
-    
-    let imageHTML = '';
-    if (imagePath) {
-        const fullPath = `/plant_images/layer_1/${imagePath}`;
-        imageHTML = `<img src="${fullPath}" class="attached-image" alt="添付画像" onclick="showAttachedImage('${fullPath}')">`;
+    messageDiv.className='message user-message';
+    let imageHTML='';
+    if(imagePath){
+        const fullPath=`/plant_images/layer_1/${imagePath}`;
+        imageHTML=`<img src="${fullPath}" class="attached-image" alt="添付画像" onclick="showAttachedImage('${fullPath}')">`;
     }
-    
-    messageDiv.innerHTML = `
-        <div class="message-avatar">
-            <i class="fas fa-user"></i>
-        </div>
+    messageDiv.innerHTML=`
+        <div class="message-avatar"><i class="fas fa-user"></i></div>
         <div class="message-bubble user-bubble">
-            <div class="message-content">
-                <p class="mb-0">${escapeHtml(message)}</p>
-                ${imageHTML}
-            </div>
-        </div>
-    `;
-    
+            <div class="message-content"><p class="mb-0">${escapeHtml(message)}</p>${imageHTML}</div>
+        </div>`;
     chatContainer.appendChild(messageDiv);
     scrollToBottom();
 }
 
-// AIメッセージを追加
-function addAIMessage(message) {
+// AIメッセージ追加
+function addAIMessage(message){
     const chatContainer = document.getElementById('chat-container');
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message ai-message';
-    
-    // MarkdownをHTMLに変換
-    const htmlContent = marked.parse(message);
-    
-    messageDiv.innerHTML = `
-        <div class="message-avatar">
-            <i class="fas fa-robot"></i>
-        </div>
+    if(!chatContainer) return;
+    const messageDiv=document.createElement('div');
+    messageDiv.className='message ai-message';
+    let htmlContent='';
+    if(typeof marked!=='undefined'){
+        try{htmlContent=marked.parse(message||'');}catch(e){htmlContent=escapeHtml(message||'');}
+    }else htmlContent=escapeHtml(message||'');
+    messageDiv.innerHTML=`
+        <div class="message-avatar"><i class="fas fa-robot"></i></div>
         <div class="message-bubble ai-bubble">
-            <div class="message-content markdown-body">
-                ${htmlContent}
-            </div>
-        </div>
-    `;
-    
+            <div class="message-content markdown-body">${htmlContent}</div>
+        </div>`;
     chatContainer.appendChild(messageDiv);
-    
-    // コードブロックのハイライトを適用
-    messageDiv.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
-    
+    try{messageDiv.querySelectorAll('pre code').forEach((block)=>{if(typeof hljs!=='undefined') hljs.highlightElement(block);});}catch(e){}
     scrollToBottom();
 }
 
-// タイピングインジケーターを表示
-function showTypingIndicator() {
-    const chatContainer = document.getElementById('chat-container');
-    
-    const indicatorDiv = document.createElement('div');
-    indicatorDiv.className = 'message ai-message';
-    indicatorDiv.id = 'typing-indicator';
-    
-    indicatorDiv.innerHTML = `
-        <div class="message-avatar">
-            <i class="fas fa-robot"></i>
-        </div>
-        <div class="message-bubble ai-bubble">
-            <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        </div>
-    `;
-    
-    chatContainer.appendChild(indicatorDiv);
-    scrollToBottom();
-}
+async function sendMessage(quickActionType=null){
+    const input=document.getElementById('user-input');
+    const message=input?input.value.trim():'';
+    if(!message && !quickActionType) return;
+    const sendBtn=document.getElementById('send-btn');
+    if(sendBtn){sendBtn.disabled=true; sendBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> 送信中...';}
 
-// タイピングインジケーターを削除
-function removeTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) {
-        indicator.remove();
+    addUserMessage(message, selectedImageFilename);
+    if(input) input.value='';
+
+    try{
+        showTypingIndicator();
+        const requestData={
+            message:message,
+            image_filename:selectedImageFilename||null,
+            sensor_data:null,
+            quick_action_type:quickActionType
+        };
+        const response=await fetch('/api/ai-chat',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(requestData)
+        });
+        removeTypingIndicator();
+        if(!response.ok){
+            const text=await response.text().catch(()=>'');
+            addAIMessage(`⚠️ **エラー**\n\nAPI Error: ${response.status}\n${escapeHtml(text)}`);
+            return;
+        }
+        const data=await response.json();
+        if(data.error) addAIMessage(`⚠️ **エラー**\n\n${escapeHtml(data.error)}`);
+        else addAIMessage(data.response||'（AIからの応答がありません）');
+    }catch(err){
+        console.error('sendMessage error:', err);
+        removeTypingIndicator();
+        addAIMessage('⚠️ **エラー**\n\n通信中にエラーが発生しました。');
+    }finally{
+        removeAttachedImage();
+        if(sendBtn){sendBtn.disabled=false; sendBtn.innerHTML='<i class="fas fa-paper-plane"></i> 送信';}
     }
 }
 
-// チャットを最下部にスクロール
-function scrollToBottom() {
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
+// 画像プレビュー
+function showAttachedImage(imagePath){if(!imagePath) return; window.open(imagePath,'_blank');}
+function escapeHtml(text){if(text===undefined||text===null) return''; const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return String(text).replace(/[&<>"']/g,m=>map[m]);}
+function scrollToBottom(){const chatContainer=document.getElementById('chat-container'); if(!chatContainer) return; chatContainer.scrollTop=chatContainer.scrollHeight;}
+function showTypingIndicator(){const chatContainer=document.getElementById('chat-container'); if(!chatContainer) return; if(document.getElementById('typing-indicator')) return; const indicatorDiv=document.createElement('div'); indicatorDiv.className='message ai-message'; indicatorDiv.id='typing-indicator'; indicatorDiv.innerHTML=`
+    <div class="message-avatar"><i class="fas fa-robot"></i></div>
+    <div class="message-bubble ai-bubble">
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>`; chatContainer.appendChild(indicatorDiv); scrollToBottom();}
+function removeTypingIndicator(){const indicator=document.getElementById('typing-indicator'); if(indicator) indicator.remove();}
 
-// 添付画像をモーダルで表示
-function showAttachedImage(imagePath) {
-    document.getElementById('modal-preview-image').src = imagePath;
-    imagePreviewModal.show();
-}
+function confirmImageSelection() {
+    if (!tempSelectedImage) return;
 
-// HTMLエスケープ
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    selectedImageFilename = tempSelectedImage.filename;
+
+    const preview = document.getElementById('attached-image-preview');
+    const thumb = document.getElementById('attached-image-thumb');
+    const dateDisplay = document.getElementById('attached-image-date');
+    const quickActions = document.getElementById('quick-action-container');
+
+    if (thumb) thumb.src = `/plant_images/layer_1/${selectedImageFilename}`;
+    if (dateDisplay) dateDisplay.textContent = new Date(tempSelectedImage.timestamp).toLocaleDateString('ja-JP');
+    if (preview) preview.style.display = 'block';
+
+    if (quickActions) quickActions.classList.remove('d-none'); // 画像選択中にクイック質問表示
+
+    if (imageSelectModal) imageSelectModal.hide();
+    tempSelectedImage = null;
 }
 

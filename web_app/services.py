@@ -213,7 +213,18 @@ def select_images(layer_id=1, limit=100):
     from core.file_manager import select_images as core_select_images
     return core_select_images(layer_id, limit)
 
-def process_ai_chat(user_message, image_filename, sensor_data):
-    """AIチャットの応答を取得する"""
-    # core パッケージの ai_manager から関数をインポートして使用
-    return core_process_ai_chat(user_message, image_filename, sensor_data)
+def process_ai_chat(user_message, image_filename, sensor_data, app_root_path, quick_action_type=None):
+    """
+    AIチャットの応答を取得する。
+    全てのコンテキスト情報（画像、センサーデータ、実行タイプ、アプリのルートパス）を
+    コアのAI処理関数に引き渡す。
+    """
+    
+    # 💡 修正点: quick_action_type と app_root_path を引数として追加し、そのまま引き渡す
+    return core_process_ai_chat(
+        user_message, 
+        image_filename, 
+        sensor_data, 
+        app_root_path,
+        quick_action_type
+    )
