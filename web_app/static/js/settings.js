@@ -86,23 +86,20 @@ async function saveSettings(apiUrl, data, settingName) {
     }
 }
 
-
 // 5.a. デフォルト設定に戻す処理 （個別）
 async function handleSingleReset(key) {
     const inputId = key; 
-    const settingName = key; // 表示名はここではキー名をそのまま利用（またはHTMLから取得）
+    const settingName = key; 
 
     if (!confirm(`本当に${settingName}をデフォルトに戻しますか？`)) return;
 
     try {
-        // API_URLS.resetSingle を使用
         const response = await fetch(API_URLS.resetSingle, { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key: key }) 
         });
 
-        // ... (以下は変更なし) ...
         if (response.ok) {
             const data = await response.json();
             document.getElementById(inputId).value = data.default_value; 
@@ -139,16 +136,22 @@ async function handleOverallReset(apiUrl, settingName) {
     }
 }
 
-// 6. メッセージ表示ヘルパー関数
+// 6.メッセージ表示ヘルパー関数
 function displayMessage(message, className) {
     const container = document.getElementById('message-area');
-    // ... (前回のメッセージ表示ロジックと同じ) ...
+
     container.innerHTML = `
         <div class="alert ${className} alert-dismissible fade show" role="alert">
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `;
+
+    window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+    });
+
     setTimeout(() => {
         const alertElement = container.querySelector('.alert');
         if (alertElement) {
@@ -159,7 +162,7 @@ function displayMessage(message, className) {
 }
 
 
-// 7. イベントリスナーのセットアップ (修正)
+// 7.イベントリスナーのセットアップ 
 document.addEventListener('DOMContentLoaded', () => {
     // 制御・閾値フォーム
     document.getElementById('threshold-form').addEventListener('submit', handleThresholdSubmit);
@@ -171,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleOverallReset(API_URLS.resetThresholds, '制御・閾値設定');
     });
 
-    // 👇 連携 全体リセットボタンのバインド
+    // 連携 全体リセットボタンのバインド
     document.getElementById('reset-integrations-btn').addEventListener('click', () => {
         handleOverallReset(API_URLS.resetIntegrations, 'LLM設定'); // API_URLS.resetIntegrations は統合・連携リセット用
     });
