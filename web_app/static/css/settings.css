@@ -1,6 +1,7 @@
-.d-flex.justify-content-end.mt-4 > button:first-child {
-    font-size: 0.8em; 
+.d-flex.justify-content-end.mt-4 > button {
+    font-size: 0.8em;
 }
+
 
 .input-group .btn-outline-secondary {
     border-color: #dee2e6; 
@@ -15,4 +16,19 @@
 .input-group .btn-outline-secondary:focus {
     box-shadow: none;
     border-color: #dee2e6;
+}
+
+.form-text {
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
+.card-body hr {
+    margin: 1.5rem 0;
+    opacity: 0.15;
+}
+
+.card-header {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
 }

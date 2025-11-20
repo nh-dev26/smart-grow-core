@@ -21,7 +21,7 @@
         <div class="col-12 col-lg-7">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-microchip text-success"></i> 制御・閾値</h5>
+                    <h5 class="card-title mb-0"><i class="fas fa-microchip text-success"></i> 制御・閾値設定</h5>
                 </div>
                 <div class="card-body">
                     <form id="threshold-form">
@@ -104,7 +104,7 @@
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </div>
-                                <div class="form-text mt-1">水ポンプ制御リレーモジュールの**GPIOピン**</div>
+                                <div class="form-text mt-1">水ポンプ制御リレーモジュールの<strong>GPIOピン</strong></div>
                             </div>
                             
                             <div class="col-md-6">
@@ -115,13 +115,13 @@
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </div>
-                                <div class="form-text mt-1">I2C通信で使用する**バス番号**</div>
+                                <div class="form-text mt-1">I2C通信で使用する<strong>バス番</strong></div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
-                            <button type="button" class="btn btn-outline-secondary" id="reset-tresholds-btn"><i class="fas fa-undo"></i> 全体の値をリセット</button>
+                            <button type="submit" class="btn btn-success fw-semibold me-2"><i class="fas fa-save"></i> 変更を保存</button>
+                            <button type="button" class="btn btn-danger fw-semibold" id="reset-tresholds-btn"><i class="fas fa-undo"></i> 全体の値をリセット</button>
                         </div>
                     </form>
                 </div>
@@ -155,8 +155,8 @@
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-success me-2"><i class="fas fa-save"></i> 変更を保存</button>
-                            <button type="button" class="btn btn-outline-secondary" id="reset-integrations-btn"><i class="fas fa-undo"></i> 全体の値をリセット</button>
+                            <button type="submit" class="btn btn-success fw-semibold me-2"><i class="fas fa-save"></i> 変更を保存</button>
+                            <button type="button" class="btn btn-danger fw-semibold" id="reset-integrations-btn"><i class="fas fa-undo"></i> 全体の値をリセット</button>
                         </div>
                     </form>
                 </div>
