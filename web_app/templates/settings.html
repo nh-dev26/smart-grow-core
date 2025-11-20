@@ -2,18 +2,20 @@
 
 {% block title %}設定 - Smart Grow System{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row mb-4">
         <div class="col">
             <h1 class="display-6"><i class="fas fa-cog text-success"></i> システム設定</h1>
-            <p class="text-muted">システムの動作パラメータと連携設定を変更します</p>
+            <p class="text-muted">システムの動作パラメータと連携設定を変更</p>
         </div>
     </div>
-    
-    <div class="row mb-4">
-        <div class="col" id="message-area"></div>
-    </div>
+ 
+    <div class="col" id="message-area"></div>
 
     <div class="row g-4">
         <div class="col-12 col-lg-7">
@@ -25,7 +27,7 @@
                     <form id="threshold-form">
                         <h6 class="text-secondary mt-2 mb-3">水やり設定</h6>
                         <div class="mb-3">
-                            <label for="water_duration_sec" class="form-label">給水時間（`water_duration_sec`）</label>
+                            <label for="water_duration_sec" class="form-label">給水時間</label>
                             <input type="number" class="form-control" id="water_duration_sec" min="1" step="1" required>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-text">ポンプが動作する時間 (秒)。</div>
@@ -37,7 +39,7 @@
                         <h6 class="text-secondary mt-4 mb-3">環境温度閾値</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="temp_high_threshold" class="form-label">最高許容温度（`temp_high_threshold`）</label>
+                                <label for="temp_high_threshold" class="form-label">最高許容温度</label>
                                 <input type="number" class="form-control" id="temp_high_threshold" step="0.1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">この温度を超えると警告を発します (℃)。</div>
@@ -45,7 +47,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="temp_low_threshold" class="form-label">最低許容温度（`temp_low_threshold`）</label>
+                                <label for="temp_low_threshold" class="form-label">最低許容温度</label>
                                 <input type="number" class="form-control" id="temp_low_threshold" step="0.1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">この温度を下回ると警告を発します (℃)。</div>
@@ -58,7 +60,7 @@
                         <h6 class="text-secondary mt-4 mb-3">水圧閾値</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="supply_low_threshold" class="form-label">給水低下閾値（`supply_low_threshold`）</label>
+                                <label for="supply_low_threshold" class="form-label">給水低下閾値</label>
                                 <input type="number" class="form-control" id="supply_low_threshold" step="0.1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">この値未満で給水タンクの警告を発します (kPa)。</div>
@@ -66,7 +68,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="drain_high_threshold" class="form-label">排水高圧閾値（`drain_high_threshold`）</label>
+                                <label for="drain_high_threshold" class="form-label">排水高圧閾値</label>
                                 <input type="number" class="form-control" id="drain_high_threshold" step="0.1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">この値を超えると排水タンクの警告を発します (kPa)。</div>
@@ -79,7 +81,7 @@
                         <h6 class="text-secondary mt-4 mb-3">ハードウェア接続設定</h6>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="pump_gpio_sig" class="form-label">水ポンプ GPIOピン (`pump_gpio_sig`)</label>
+                                <label for="pump_gpio_sig" class="form-label">水ポンプ GPIOピン</label>
                                 <input type="number" class="form-control"id="pump_gpio_sig" min="0" step="1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">水ポンプ制御リレーモジュールの**GPIOピン**</div>
@@ -87,7 +89,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="i2c_bus_num" class="form-label">I2C バス番号 (`i2c_bus_num`)</label>
+                                <label for="i2c_bus_num" class="form-label">I2C バス番号</label>
                                 <input type="number" class="form-control" id="i2c_bus_num" min="0" step="1" required>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="form-text">I2C通信で使用する**バス番号**</div>
@@ -114,7 +116,7 @@
                     <form id="integration-form">
                         
                         <div class="mb-3">
-                            <label for="llm_model_name" class="form-label">LLMモデル名（`llm_model_name`）</label>
+                            <label for="llm_model_name" class="form-label">LLMモデル名</label>
                             
                             <select class="form-select" id="llm_model_name" required>
                                 <option value="gpt-4-turbo">GPT-4 Turbo (互換性・強力)</option>
