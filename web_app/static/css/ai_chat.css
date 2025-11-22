@@ -1,6 +1,9 @@
-/* AI Chat ページのスタイル */
+/* ================================================== */
+/* AI Chat ページのスタイル (統合版) */
+/* ================================================== */
 
-/* ミニカレンダー */
+/* --- 1. ミニカレンダー --- */
+
 .mini-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -33,8 +36,9 @@
 }
 
 .mini-cal-day.has-image {
-    background-color: #d1e7dd;
-    border-color: #198754;
+    /* 選択可能日を強調 */
+    background-color: #d1e7dd; /* Light Green */
+    border-color: #198754; /* Success Green */
     font-weight: 600;
     color: #198754;
 }
@@ -45,6 +49,7 @@
 }
 
 .mini-cal-day.selected {
+    /* 選択中の日 */
     background-color: #198754;
     color: white;
     border-color: #198754;
@@ -52,7 +57,8 @@
 }
 
 .mini-cal-day.today {
-    border: 2px solid #0dcaf0;
+    /* 今日の日付を強調 */
+    border: 2px solid #0dcaf0; /* Info Blue */
 }
 
 .mini-cal-day:empty {
@@ -63,7 +69,9 @@
     background-color: transparent;
 }
 
-/* チャットカード */
+
+/* --- 2. チャットコンテナ/カード --- */
+
 .chat-card {
     height: 60vh;
     display: flex;
@@ -74,10 +82,14 @@
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
-    background-color: #f8f9fa;
+    background-color: #fff;
+    /* スムーズスクロールを有効化（もし可能であれば） */
+    scroll-behavior: smooth; 
 }
 
-/* メッセージスタイル */
+
+/* --- 3. メッセージ基本スタイル --- */
+
 .message {
     display: flex;
     margin-bottom: 1.5rem;
@@ -104,13 +116,13 @@
 }
 
 .ai-message .message-avatar {
-    background-color: #198754;
+    background-color: #198754; /* Success Green */
     color: white;
     margin-right: 0.75rem;
 }
 
 .user-message .message-avatar {
-    background-color: #0d6efd;
+    background-color: #0d6efd; /* Primary Blue */
     color: white;
     margin-left: 0.75rem;
     order: 2;
@@ -129,7 +141,7 @@
 }
 
 .user-bubble {
-    background-color: #0d6efd;
+    background-color: #0d6efd; /* Primary Blue */
     color: white;
 }
 
@@ -141,82 +153,149 @@
     margin-bottom: 0;
 }
 
-/* Markdown コンテンツ */
-.message-content h2 {
+
+/* --- 4. Markdown コンテンツ (読解性改善部分) --- */
+
+/* Markdown全体に適用される設定（ai-messageの子要素にのみ影響） */
+.ai-message .message-content {
+    word-break: break-word; 
+}
+
+/* h2 見出し: トピックの区切りを強調 */
+.ai-message .message-content h2 {
     font-size: 1.3rem;
-    margin-top: 1rem;
+    margin-top: 1.5rem; /* 上部のマージンを少し増やし、区切りを明確に */
     margin-bottom: 0.75rem;
-    border-bottom: 2px solid #198754;
+    border-bottom: 2px solid #198754; /* Success Green */
     padding-bottom: 0.3rem;
 }
 
-.message-content h3 {
+/* h3 見出し: 小見出しの強調 */
+.ai-message .message-content h3 {
     font-size: 1.1rem;
-    margin-top: 0.8rem;
+    margin-top: 1.2rem;
     margin-bottom: 0.5rem;
-    color: #198754;
+    color: #198754; /* Success Green */
 }
 
-.message-content ul, .message-content ol {
+/* リストのマージン */
+.ai-message .message-content ul, .ai-message .message-content ol {
     margin-left: 1.5rem;
     margin-bottom: 0.75rem;
 }
 
-.message-content li {
+.ai-message .message-content li {
     margin-bottom: 0.3rem;
 }
 
+/* 引用ブロック (blockquote) の視覚的区別 (追加) */
+.ai-message .message-content blockquote {
+    border-left: 4px solid #0dcaf0; /* Info Blue */
+    padding-left: 15px;
+    margin: 15px 0;
+    color: #6c757d; 
+    font-style: italic;
+    background-color: #f8f9fa; 
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+}
+
+
+/* --- 5. コードブロックの改善 (読解性改善部分) --- */
+
+/* インラインコード */
 .message-content code {
-    background-color: #f8f9fa;
+    /* 背景色を明るい色にして、本文と区別 */
+    background-color: #f9f2f4; /* Light Pinkish background */
+    color: #c7254e; /* Darker Pink/Red text */
     padding: 0.2rem 0.4rem;
     border-radius: 3px;
     font-size: 0.9em;
 }
 
+/* コードブロック (pre) */
 .message-content pre {
-    background-color: #f8f9fa;
+    /* 以前の#f8f9faから、より見やすい色に変更 */
+    background-color: #f7f7f7; 
     padding: 1rem;
     border-radius: 6px;
-    overflow-x: auto;
+    overflow-x: auto; /* スマホで横スクロール可能に */
     margin: 0.75rem 0;
+    border: 1px solid #e0e0e0; /* ボーダーを追加 */
 }
 
 .message-content pre code {
     background-color: transparent;
     padding: 0;
+    color: inherit; /* highlight.js の色設定を優先 */
 }
 
-/* タイピングインジケーター */
-.typing-indicator {
-    display: inline-block;
+/* テーブルの改善 (レスポンシブ対応) */
+.ai-message .message-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    display: block; 
+    overflow-x: auto; /* 横スクロール可能に */
+}
+.ai-message .message-content th, .ai-message .message-content td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    white-space: nowrap; /* セル内の改行を抑制し、横スクロールを強制 */
+}
+.ai-message .message-content th {
+    background-color: #f2f2f2;
 }
 
-.typing-indicator span {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #6c757d;
-    margin: 0 2px;
-    animation: typing 1.4s infinite;
+
+/* --- 6. システムメッセージ --- */
+
+.system-message {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease-in;
 }
 
-.typing-indicator span:nth-child(2) {
-    animation-delay: 0.2s;
+.system-bubble {
+    max-width: 85%;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.typing-indicator span:nth-child(3) {
-    animation-delay: 0.4s;
+.system-header {
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-bottom: 1px dashed #dee2e6;
+    padding-bottom: 5px;
 }
 
-@keyframes typing {
-    0%, 60%, 100% {
-        transform: translateY(0);
-    }
-    30% {
-        transform: translateY(-10px);
-    }
+.system-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9rem;
 }
+
+.data-row {
+    display: flex;
+    gap: 15px;
+}
+.data-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+
+/* --- 7. その他のスタイル/アニメーション --- */
 
 /* チャット内の添付画像スタイル */
 .attached-image {
@@ -247,43 +326,56 @@
     }
 }
 
-/* システムメッセージ */
-.system-message {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    animation: fadeIn 0.3s ease-in;
+/* タイピングインジケーター */
+.typing-indicator {
+    display: inline-block;
 }
 
-.system-bubble {
-    max-width: 85%;
-    padding: 0.75rem 1rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+.typing-indicator .typing-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
 }
 
-.system-bubble h6 {
-    margin-bottom: 0.5rem;
-    color: #6c757d;
-    font-size: 0.85rem;
+.typing-indicator .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
 }
 
-.system-bubble .text-muted {
-    font-size: 0.85rem;
+.typing-indicator .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
 }
 
-/* レスポンシブ */
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* --- 8. レスポンシブ --- */
+
 @media (max-width: 768px) {
     .chat-card {
         height: 50vh;
     }
     
     .message-bubble {
-        max-width: 85%;
+        max-width: 90%; /* スマホではバブルをより広げる */
+        padding: 0.75rem 1rem;
     }
     
+    .message-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+
     .mini-cal-day {
         padding: 8px 2px;
         font-size: 0.8rem;
@@ -292,5 +384,34 @@
     .mini-cal-header {
         font-size: 0.75rem;
         padding: 6px 2px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* ... 既存のスタイル ... */
+    
+    /* クイック質問ボタンを含むコンテナ（.card-body > .d-flex... の部分を想定） */
+    .card-body .d-flex.flex-wrap {
+        /* スマホでは縦方向にスペースを確保し、ボタンをきれいに配置 */
+        justify-content: space-around; /* ボタンを均等配置 */
+        align-items: flex-start;
+    }
+    
+    .quick-action-btn {
+        /* 2列表示を目指すための設定 */
+        flex-basis: 48%; /* 親要素の48%の幅を持たせる (gap 2%のスペースを確保) */
+        min-width: 45%; 
+        margin-bottom: 8px; /* ボタン間の縦マージンを追加 */
+        font-size: 0.9rem; /* 文字サイズを少し小さく */
+        padding: 6px 10px;
+    }
+}
+
+/* さらに小さなスマホ（iPhone SEなど）向けに調整したい場合は、以下を追加 */
+@media (max-width: 400px) {
+     .quick-action-btn {
+        /* 1列表示に近づけるか、2列を維持するために最小幅を調整 */
+        flex-basis: 95%; 
+        min-width: 95%;
     }
 }
