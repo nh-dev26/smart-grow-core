@@ -78,6 +78,8 @@
     flex-direction: column;
 }
 
+
+
 .chat-container {
     flex: 1;
     overflow-y: auto;
@@ -415,3 +417,36 @@
         min-width: 95%;
     }
 }
+
+/* --- 9. 入力エリアの調整 (多行化時のボタン高さ問題を修正) --- */
+
+/* 入力エリア、ボタンを含むコンテナ（.d-flex gap-2 mb-2）の調整 */
+/* ボタンが下に揃うようにする */
+.card-footer .d-flex {
+    align-items: flex-end; /* 子要素を下揃えにする */
+}
+
+/* 添付ボタンと送信ボタンのサイズを標準の高さに固定し、textareaが伸びても追従しないようにする */
+#attach-image-btn,
+#send-btn {
+    /* Bootstrapのデフォルトのボタンの高さ(padding込み)の目安に固定 */
+    height: 38px; 
+    /* Bootstrapの標準的なパディングを確保 */
+    padding: .375rem .75rem; 
+    /* 高さが伸びることを強制的に阻止する設定 (不要かもしれませんが念のため) */
+    flex-shrink: 0; 
+}
+
+#user-input {
+    min-height: 38px !important; 
+    /* background-color: #fff !important;  */
+}
+
+.card-footer {
+    position: sticky;
+    bottom: 0;
+    background-color: #fff !important; 
+    backdrop-filter: none !important;  
+    z-index: 999;                      
+}
+

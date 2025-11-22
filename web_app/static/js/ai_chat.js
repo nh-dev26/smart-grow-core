@@ -1,8 +1,8 @@
-let imageSelectModal = null; // bootstrap modal instance
+let imageSelectModal = null;
 let imagesByDate = {};
 let allChatImages = [];
-let selectedImageFilename = null; // 送信対象
-let tempSelectedImage = null; // モーダル内一時選択
+let selectedImageFilename = null;
+let tempSelectedImage = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     const modalEl = document.getElementById('imageSelectModal');
@@ -33,10 +33,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function setupEventListeners() {
     const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+
     if (chatForm) {
         chatForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            sendMessage(null);
+            if (userInput.value.trim() !== '') {
+                sendMessage(null);
+            }
+        });
+    }
+
+    if (userInput) {
+        userInput.addEventListener('input', autoResizeTextarea);
+        autoResizeTextarea(); 
+        
+        userInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); 
+                
+                if (this.value.trim() !== '') {
+                    sendMessage(); 
+                }
+            }
         });
     }
 
@@ -66,7 +85,6 @@ function setupEventListeners() {
         });
     }
 
-    // クイック質問ボタン
     const quickBtn = document.getElementById('quick-question-btn');
     if (quickBtn) {
         quickBtn.addEventListener('click', async () => {
@@ -79,7 +97,6 @@ function setupEventListeners() {
     }
 }
 
-// 画像リスト取得
 async function loadImageList() {
     try {
         const res = await fetch('/api/images?layer_id=1');
@@ -100,13 +117,11 @@ async function loadImageList() {
     }
 }
 
-// モーダル開く
 function openImageSelectModal() {
     renderModalCalendar();
     if (imageSelectModal) imageSelectModal.show();
 }
 
-// カレンダー描画
 function renderModalCalendar() {
     const container = document.getElementById('modal-calendar');
     if (!container) return;
@@ -157,7 +172,6 @@ function renderModalCalendar() {
     tempSelectedImage = null;
 }
 
-// 日付選択
 function selectDateInModal(dateStr, clickedEl) {
     const images = imagesByDate[dateStr];
     if(!images || images.length===0) return;
@@ -180,7 +194,6 @@ function selectDateInModal(dateStr, clickedEl) {
     if(clickedEl) clickedEl.classList.add('selected');
 }
 
-// 添付削除
 function removeAttachedImage() {
     selectedImageFilename = null;
 
@@ -189,15 +202,16 @@ function removeAttachedImage() {
     if (thumb) thumb.src = '';
     if (preview) preview.style.display = 'none';
 
-    // ▼ クイック質問 全部まとめて非表示にする
     const quickActions = document.getElementById('quick-action-container');
     if (quickActions) quickActions.classList.add('d-none');
 }
 
-// ユーザーメッセージ追加
 function addUserMessage(message, imagePath) {
     const chatContainer = document.getElementById('chat-container');
     if(!chatContainer) return;
+
+    const displayMessage = nl2br(escapeHtml(message)); 
+
     const messageDiv = document.createElement('div');
     messageDiv.className='message user-message';
     let imageHTML='';
@@ -208,13 +222,12 @@ function addUserMessage(message, imagePath) {
     messageDiv.innerHTML=`
         <div class="message-avatar"><i class="fas fa-user"></i></div>
         <div class="message-bubble user-bubble">
-            <div class="message-content"><p class="mb-0">${escapeHtml(message)}</p>${imageHTML}</div>
+            <div class="message-content"><p class="mb-0">${displayMessage}</p>${imageHTML}</div>
         </div>`;
     chatContainer.appendChild(messageDiv);
     scrollToBottom();
 }
 
-// AIメッセージ追加
 function addAIMessage(message){
     const chatContainer = document.getElementById('chat-container');
     if(!chatContainer) return;
@@ -237,12 +250,19 @@ function addAIMessage(message){
 async function sendMessage(quickActionType=null){
     const input=document.getElementById('user-input');
     const message=input?input.value.trim():'';
-    if(!message && !quickActionType) return;
+    if(!message && !quickActionType) return; 
+    
     const sendBtn=document.getElementById('send-btn');
-    if(sendBtn){sendBtn.disabled=true; sendBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> 送信中...';}
+    if(sendBtn){
+        sendBtn.disabled=true; 
+        // 修正: 送信ボタンをローディングアイコンのみにする
+        sendBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+    }
 
     addUserMessage(message, selectedImageFilename);
     if(input) input.value='';
+    
+    autoResizeTextarea();
 
     try{
         showTypingIndicator();
@@ -272,13 +292,34 @@ async function sendMessage(quickActionType=null){
         addAIMessage('⚠️ **エラー**\n\n通信中にエラーが発生しました。');
     }finally{
         removeAttachedImage();
-        if(sendBtn){sendBtn.disabled=false; sendBtn.innerHTML='<i class="fas fa-paper-plane"></i> 送信';}
+        // 修正: 送信完了後、送信ボタンを飛行機アイコンのみに戻す
+        if(sendBtn){sendBtn.disabled=false; sendBtn.innerHTML='<i class="fas fa-paper-plane"></i>';}
     }
 }
 
-// 画像プレビュー
 function showAttachedImage(imagePath){if(!imagePath) return; window.open(imagePath,'_blank');}
-function escapeHtml(text){if(text===undefined||text===null) return''; const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return String(text).replace(/[&<>"']/g,m=>map[m]);}
+
+function escapeHtml(text){
+    if(text===undefined||text===null) return''; 
+    const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; 
+    return String(text).replace(/[&<>"']/g,m=>map[m]);
+}
+
+function nl2br(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/\n/g, '<br>');
+}
+
+function autoResizeTextarea() {
+    const userInput = document.getElementById('user-input');
+    if (!userInput) return;
+    
+    userInput.style.height = 'auto';
+    
+    const newHeight = userInput.scrollHeight;
+    userInput.style.height = `${newHeight}px`;
+}
+
 function scrollToBottom(){const chatContainer=document.getElementById('chat-container'); if(!chatContainer) return; chatContainer.scrollTop=chatContainer.scrollHeight;}
 function showTypingIndicator(){const chatContainer=document.getElementById('chat-container'); if(!chatContainer) return; if(document.getElementById('typing-indicator')) return; const indicatorDiv=document.createElement('div'); indicatorDiv.className='message ai-message'; indicatorDiv.id='typing-indicator'; indicatorDiv.innerHTML=`
     <div class="message-avatar"><i class="fas fa-robot"></i></div>
@@ -301,9 +342,8 @@ function confirmImageSelection() {
     if (dateDisplay) dateDisplay.textContent = new Date(tempSelectedImage.timestamp).toLocaleDateString('ja-JP');
     if (preview) preview.style.display = 'block';
 
-    if (quickActions) quickActions.classList.remove('d-none'); // 画像選択中にクイック質問表示
+    if (quickActions) quickActions.classList.remove('d-none');
 
     if (imageSelectModal) imageSelectModal.hide();
     tempSelectedImage = null;
 }
-
