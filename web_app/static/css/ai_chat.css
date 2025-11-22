@@ -36,7 +36,6 @@
 }
 
 .mini-cal-day.has-image {
-    /* 選択可能日を強調 */
     background-color: #d1e7dd; /* Light Green */
     border-color: #198754; /* Success Green */
     font-weight: 600;
@@ -49,7 +48,6 @@
 }
 
 .mini-cal-day.selected {
-    /* 選択中の日 */
     background-color: #198754;
     color: white;
     border-color: #198754;
@@ -57,7 +55,6 @@
 }
 
 .mini-cal-day.today {
-    /* 今日の日付を強調 */
     border: 2px solid #0dcaf0; /* Info Blue */
 }
 
@@ -71,29 +68,26 @@
 
 
 /* --- 2. チャットコンテナ/カード --- */
-/* ★★★ 修正箇所 ★★★ */
+
 .chat-card {
     height: 70vh;
     display: flex;
     flex-direction: column;
 }
 
-/* 🚀 追加: card-body が残りの高さをすべて占有するようにし、オーバーフローを非表示にする */
-/* HTMLで p-0 が適用されているため、カード本体のパディングは 0 でOK */
+/* card-bodyが残りの高さを占有し、スクロールを子要素に任せる */
 .chat-card .card-body {
     flex: 1; 
-    overflow: hidden; /* 子要素である chat-container のみでスクロールさせるため */
+    overflow: hidden; 
     padding: 0; 
 }
 
 
 .chat-container {
-    /* 修正: flex: 1; を削除し、親要素 (card-body) の高さ100%を使用 */
     height: 100%; 
     overflow-y: auto;
     padding: 1.5rem;
     background-color: #fff;
-    /* スムーズスクロールを有効化 */
     scroll-behavior: smooth; 
 }
 
@@ -143,7 +137,6 @@
     padding: 1rem 1.25rem;
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    /* 🚀 追加: 長い単語やURLがバブルからはみ出すのを防ぐ */
     word-break: break-word; 
     overflow-wrap: break-word;
 }
@@ -167,23 +160,23 @@
 }
 
 
-/* --- 4. Markdown コンテンツ (読解性改善部分) --- */
+/* --- 4. Markdown コンテンツ --- */
 
 /* Markdown全体に適用される設定（ai-messageの子要素にのみ影響） */
 .ai-message .message-content {
     word-break: break-word; 
 }
 
-/* h2 見出し: トピックの区切りを強調 */
+/* h2 見出し */
 .ai-message .message-content h2 {
     font-size: 1.3rem;
-    margin-top: 1.5rem; /* 上部のマージンを少し増やし、区切りを明確に */
+    margin-top: 1.5rem; 
     margin-bottom: 0.75rem;
     border-bottom: 2px solid #198754; /* Success Green */
     padding-bottom: 0.3rem;
 }
 
-/* h3 見出し: 小見出しの強調 */
+/* h3 見出し */
 .ai-message .message-content h3 {
     font-size: 1.1rem;
     margin-top: 1.2rem;
@@ -201,7 +194,7 @@
     margin-bottom: 0.3rem;
 }
 
-/* 引用ブロック (blockquote) の視覚的区別 (追加) */
+/* 引用ブロック (blockquote) の視覚的区別 */
 .ai-message .message-content blockquote {
     border-left: 4px solid #0dcaf0; /* Info Blue */
     padding-left: 15px;
@@ -215,11 +208,10 @@
 }
 
 
-/* --- 5. コードブロックの改善 (読解性改善部分) --- */
+/* --- 5. コードブロックの改善 --- */
 
 /* インラインコード */
 .message-content code {
-    /* 背景色を明るい色にして、本文と区別 */
     background-color: #f9f2f4; /* Light Pinkish background */
     color: #c7254e; /* Darker Pink/Red text */
     padding: 0.2rem 0.4rem;
@@ -229,36 +221,34 @@
 
 /* コードブロック (pre) */
 .message-content pre {
-    /* 以前の#f8f9faから、より見やすい色に変更 */
     background-color: #f7f7f7; 
     padding: 1rem;
     border-radius: 6px;
-    overflow-x: auto; /* スマホで横スクロール可能に */
+    overflow-x: auto; 
     margin: 0.75rem 0;
-    border: 1px solid #e0e0e0; /* ボーダーを追加 */
-    /* 🚀 追加: コードブロック内の改行されていない長い文字列を強制的に改行する */
+    border: 1px solid #e0e0e0; 
     word-break: break-all; 
 }
 
 .message-content pre code {
     background-color: transparent;
     padding: 0;
-    color: inherit; /* highlight.js の色設定を優先 */
+    color: inherit; 
 }
 
-/* テーブルの改善 (レスポンシブ対応) */
+/* テーブルの改善 */
 .ai-message .message-content table {
     width: 100%;
     border-collapse: collapse;
     margin: 15px 0;
     display: block; 
-    overflow-x: auto; /* 横スクロール可能に */
+    overflow-x: auto; 
 }
 .ai-message .message-content th, .ai-message .message-content td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
-    white-space: nowrap; /* セル内の改行を抑制し、横スクロールを強制 */
+    white-space: nowrap; 
 }
 .ai-message .message-content th {
     background-color: #f2f2f2;
@@ -380,12 +370,19 @@
         height: 70vh;
     }
     
-    .message-bubble {
-        max-width: 90%; /* スマホではバブルをより広げる */
-        padding: 0.75rem 1rem;
-        /* word-break: break-word; は継承されるか、上記で全体に設定済み */
+    /* 窮屈さ解消のための調整 */
+    .ai-message .message-avatar {
+        margin-right: 0.5rem; 
+    }
+    .ai-message .message-bubble {
+        margin-left: -5px; /* アバターに近づけ、左のスペースを詰める */
     }
     
+    .message-bubble {
+        max-width: 95%; /* 90%から95%へ拡大 */
+        padding: 0.6rem 0.9rem; /* パディングを小さくする */
+    }
+
     .message-avatar {
         width: 35px;
         height: 35px;
@@ -401,59 +398,65 @@
         font-size: 0.75rem;
         padding: 6px 2px;
     }
-}
 
-@media (max-width: 768px) {
-    /* ... 既存のスタイル ... */
+    /* コンテンツ内部の縦方向の窮屈さを解消 */
+    .ai-message .message-content h2,
+    .ai-message .message-content h3 {
+        margin-top: 1rem; 
+        margin-bottom: 0.5rem;
+    }
     
-    /* クイック質問ボタンを含むコンテナ（.card-body > .d-flex... の部分を想定） */
-    .card-body .d-flex.flex-wrap {
-        /* スマホでは縦方向にスペースを確保し、ボタンをきれいに配置 */
-        justify-content: space-around; /* ボタンを均等配置 */
-        align-items: flex-start;
+    .ai-message .message-content ul, 
+    .ai-message .message-content ol {
+        margin-left: 1rem; 
+        margin-bottom: 0.5rem;
+    }
+    
+    .ai-message .message-content li {
+        margin-bottom: 0.2rem; 
+    }
+    
+    .ai-message .message-content p {
+        margin-bottom: 0.6rem; 
+    }
+    
+    /* クイック質問ボタンの二列配置（親要素は #quick-action-container を想定） */
+    #quick-action-container {
+        display: flex; 
+        flex-wrap: wrap; 
+        justify-content: space-between; 
+        gap: 8px; 
+        margin-bottom: 0; 
     }
     
     .quick-action-btn {
-        /* 2列表示を目指すための設定 */
-        flex-basis: 48%; /* 親要素の48%の幅を持たせる (gap 2%のスペースを確保) */
-        min-width: 45%; 
-        margin-bottom: 8px; /* ボタン間の縦マージンを追加 */
-        font-size: 0.9rem; /* 文字サイズを少し小さく */
-        padding: 6px 10px;
+        flex-basis: 48.5%; 
+        min-width: unset; 
+        margin-bottom: 0; 
+        font-size: 0.85rem; 
+        padding: 8px 6px;
+        text-align: center;
     }
 }
 
-/* さらに小さなスマホ（iPhone SEなど）向けに調整したい場合は、以下を追加 */
-@media (max-width: 400px) {
-     .quick-action-btn {
-         /* 1列表示に近づけるか、2列を維持するために最小幅を調整 */
-         flex-basis: 95%; 
-         min-width: 95%;
-    }
-}
+/* 以前の重複した media query と max-width: 400px の調整は削除 */
 
-/* --- 9. 入力エリアの調整 (多行化時のボタン高さ問題を修正) --- */
 
-/* 入力エリア、ボタンを含むコンテナ（.d-flex gap-2 mb-2）の調整 */
-/* ボタンが下に揃うようにする */
+/* --- 9. 入力エリアの調整 --- */
+
 .card-footer .d-flex {
-    align-items: flex-end; /* 子要素を下揃えにする */
+    align-items: flex-end; 
 }
 
-/* 添付ボタンと送信ボタンのサイズを標準の高さに固定し、textareaが伸びても追従しないようにする */
 #attach-image-btn,
 #send-btn {
-    /* Bootstrapのデフォルトのボタンの高さ(padding込み)の目安に固定 */
     height: 38px; 
-    /* Bootstrapの標準的なパディングを確保 */
     padding: .375rem .75rem; 
-    /* 高さが伸びることを強制的に阻止する設定 (不要かもしれませんが念のため) */
     flex-shrink: 0; 
 }
 
 #user-input {
     min-height: 38px !important; 
-    /* background-color: #fff !important;  */
 }
 
 .card-footer {
@@ -463,4 +466,3 @@
     backdrop-filter: none !important; 
     z-index: 999; 
 }
-
