@@ -220,6 +220,12 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
             ai_summary = json_data.get("summary", "")
             ai_advice = json_data.get("advice", "")
             update_ai_report(report_id, growth_rate=0.0, ai_summary=ai_summary, ai_advice=ai_advice, json_response=str(json_data))
+            
+            #send_slack_notification(layer_id, ai_summary, image_path)
+
+            # 通知フラグの更新 (通知が成功した場合のみ)
+            # update_ai_report 関数内で slack_sent を 1 に更新する
+            #update_ai_report_status(report_id, slack_sent=1)
 
         return json_data
 

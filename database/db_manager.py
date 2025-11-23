@@ -337,6 +337,7 @@ def select_next_schedules(limit=3):
     schedules.sort(key=lambda x: x['exec_time'])
     return schedules[:limit]
 
+# 以下AIレポート用関数群移植
 def select_ai_report(report_id: int):
     """単一のAI解析レポート行を取得"""
     with open_db() as conn:
