@@ -190,13 +190,14 @@ def insert_sensor_log(layer_id, temperature=None, humidity=None, supply_pressure
             (layer_id, timestamp, temperature, humidity, supply_pressure, drain_pressure)
         )
 
-def insert_camera_log(layer_id, timestamp_str, image_path):
+def insert_initial_ai_report(layer_id, timestamp_str, image_path):
     """
     カメラ撮影後にAI解析に前段階として画像パスを含むレポートの器を作成する
     """
     # timestamp = datetime.now().isoformat()
     with open_db() as conn:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             """
             INSERT INTO ai_reports (
                 layer_id, timestamp, growth_rate, ai_summary, ai_advice, image_path, json_response, slack_sent, llm_model_name, last_updated
@@ -205,6 +206,7 @@ def insert_camera_log(layer_id, timestamp_str, image_path):
             (layer_id, timestamp_str, 0.0, 'N/A', '', image_path, '{}', 0, 'gpt-4-turbo', timestamp_str)
         )
 
+        return  cursor.lastrowid 
 
 def insert_system_log(layer_id, log_level, message, details=None, timestamp_str=None):
     """
@@ -334,3 +336,28 @@ def select_next_schedules(limit=3):
     # exec_timeでソート
     schedules.sort(key=lambda x: x['exec_time'])
     return schedules[:limit]
+
+def select_ai_report(report_id: int):
+    """単一のAI解析レポート行を取得"""
+    with open_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT report_id, layer_id, timestamp, image_path, growth_rate, 
+                   ai_summary, ai_advice, llm_model_name, json_response
+            FROM ai_reports
+            WHERE report_id = ?
+        """, (report_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+def update_ai_report(report_id: int, growth_rate: float, ai_summary: str, ai_advice: str, json_response: str):
+    """
+    AIレポートの解析結果をDBに保存
+    """
+    with open_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE ai_reports
+            SET growth_rate = ?, ai_summary = ?, ai_advice = ?, json_response = ?, last_updated = ?
+            WHERE report_id = ?
+        """, (growth_rate, ai_summary, ai_advice, json_response, datetime.now().isoformat(), report_id))

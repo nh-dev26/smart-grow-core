@@ -3,8 +3,9 @@ import datetime
 from time import sleep
 import os
 import glob
-from database.db_manager import insert_camera_log, insert_system_log, select_layer_info
+from database.db_manager import insert_initial_ai_report, insert_system_log, select_layer_info
 from config import *
+from jobs.report_jobs import run_ai_report_job
 
 def get_file_name(job_timestamp):
     """ファイル名を生成（例: 20250910_100000.jpg）"""
@@ -39,7 +40,7 @@ def execute_photo_job(layer_id: int):
     """
     指定された層 (layer_id) のカメラを起動し、撮影、保存、DB記録を行う。
     """
-    
+    from core.scheduler import scheduler
     job_timestamp = datetime.datetime.now()
     job_timestamp_str = job_timestamp.isoformat()
     SAVE_DIR = os.path.join(BASE_SAVE_DIR, f"layer_{layer_id}")
@@ -102,22 +103,35 @@ def execute_photo_job(layer_id: int):
             return
         
         file_name = get_file_name(job_timestamp)
-        relative_file_path = os.path.join(SAVE_DIR, file_name) 
+        image_full_path = os.path.join(SAVE_DIR, file_name) 
         
-        save_image(frame, relative_file_path)
+        save_image(frame, image_full_path)
         
-        insert_camera_log(layer_id, job_timestamp_str, relative_file_path)
+        report_id = insert_initial_ai_report(layer_id, job_timestamp_str, image_full_path)
         
+        if report_id:
+            # 取得した report_id を使って、AIジョブを即時実行するように登録
+            scheduler.add_job(
+                run_ai_report_job,
+                trigger='date',
+                args=[report_id],
+                id=f'ai_report_{report_id}', # ジョブIDが一意になるように設定
+                name=f'AI Report for Layer {layer_id} - Image {report_id}',
+                replace_existing=True, # 万が一同じIDのジョブがあれば上書き
+                misfire_grace_time=300 # 5分以内の遅延なら実行を許可
+            )
+            print(f"[CAMERA JOB] AIレポートジョブ (ID: ai_report_{report_id}) をスケジュールに登録しました。")
+
         insert_system_log(
             layer_id=layer_id, 
             log_level='INFO', 
             message='Camera job finished successfully.', 
-            details=f'Path: {relative_file_path}',
+            details=f'Path: {image_full_path}',
             timestamp_str=job_timestamp_str)
         
         delete_old_images(SAVE_DIR)
         
-        print(f"[CAMERA JOB] Layer {layer_id} の画像を {relative_file_path} に保存しました。")
+        print(f"[CAMERA JOB] Layer {layer_id} の画像を {image_full_path} に保存しました。")
 
     except Exception as e:
         insert_system_log(

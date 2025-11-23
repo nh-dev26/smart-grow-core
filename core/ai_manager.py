@@ -6,6 +6,8 @@ import io
 from pathlib import Path
 from datetime import datetime
 from PIL import Image
+import json
+import re
 
 # Gemini API の設定
 if LLM_API_KEY:
@@ -141,3 +143,86 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=Non
             raise ConnectionError('APIの使用制限に達しました。しばらく待ってから再試行してください。')
         else:
             raise RuntimeError(f'AI処理中にエラーが発生しました: {error_msg}')
+        
+
+
+
+# 以下テスト実装
+
+def create_report_prompt_image_only(image_filename: str):
+    """
+    画像だけでAIレポートを作るプロンプト
+    """
+    prompt = f"""
+あなたは豆苗の成長解析専門AIです。
+以下の画像を解析し、豆苗の健康状態や問題点を判断してください。
+
+【画像ファイル名】: {image_filename}
+
+解析結果をJSON形式で返してください。必須項目は以下です：
+{{
+    "summary": "豆苗の現状を短く1〜2文で記述",
+    "advice": "育成を改善するための具体的アドバイス1〜3文"
+}}
+
+- 画像だけで判断するので、成長度や健康状態は視覚的推定でOK
+- JSON以外の出力はしないでください
+"""
+    return prompt
+
+def extract_json_from_text(text):
+    """
+    レスポンス文字列からJSON部分だけ抽出
+    """
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        return match.group()
+    return "{}"
+
+def generate_ai_report_from_image(image_path: str, report_id: int = None):
+    """
+    画像を渡してAIレポートを取得し、必要であればDBに保存する。
+    report_id が指定されていれば保存も行う。
+    """
+    if not gemini_model:
+        raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
+
+    img_path = Path(image_path)
+    if not img_path.exists():
+        print(f"[AI Report] Warning: 画像ファイルが見つかりません: {img_path}")
+        return None
+
+    try:
+        with open(img_path, 'rb') as f:
+            image_bytes = f.read()
+        image_data = Image.open(io.BytesIO(image_bytes))
+    except Exception as e:
+        print(f"[AI Report] 画像読み込みエラー: {e}")
+        return None
+
+    prompt = create_report_prompt_image_only(img_path.name)
+
+    try:
+        response = gemini_model.generate_content([prompt, image_data])
+        ai_text = response.text
+        print(f"[AI Report] レスポンス受信: {len(ai_text)}文字")
+        
+        try:
+            json_str = extract_json_from_text(ai_text)
+            json_data = json.loads(json_str)
+        except json.JSONDecodeError:
+            print("[AI Report] JSON解析に失敗しました")
+            json_data = {"summary": "", "advice": ""}
+
+        # report_id が指定されていればDB更新
+        if report_id is not None:
+            from database.db_manager import update_ai_report
+            ai_summary = json_data.get("summary", "")
+            ai_advice = json_data.get("advice", "")
+            update_ai_report(report_id, growth_rate=0.0, ai_summary=ai_summary, ai_advice=ai_advice, json_response=str(json_data))
+
+        return json_data
+
+    except Exception as e:
+        print(f"[AI Report] Gemini API エラー: {e}")
+        return None
