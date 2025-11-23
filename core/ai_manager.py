@@ -8,6 +8,8 @@ from datetime import datetime
 from PIL import Image
 import json
 import re
+from database.db_manager import select_ai_report
+from core.slack_manager import send_report_slack_notification
 
 # Gemini API の設定
 if LLM_API_KEY:
@@ -214,18 +216,24 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
             print("[AI Report] JSON解析に失敗しました")
             json_data = {"summary": "", "advice": ""}
 
-        # report_id が指定されていればDB更新
+        # report_id が指定されていればDB更新, Slack通知
         if report_id is not None:
             from database.db_manager import update_ai_report
             ai_summary = json_data.get("summary", "")
             ai_advice = json_data.get("advice", "")
             update_ai_report(report_id, growth_rate=0.0, ai_summary=ai_summary, ai_advice=ai_advice, json_response=str(json_data))
             
-            #send_slack_notification(layer_id, ai_summary, image_path)
-
-            # 通知フラグの更新 (通知が成功した場合のみ)
-            # update_ai_report 関数内で slack_sent を 1 に更新する
-            #update_ai_report_status(report_id, slack_sent=1)
+            report = select_ai_report(report_id)
+            if report:
+                layer_id = report['layer_id']
+                try:
+                    send_report_slack_notification(
+                        layer_id=layer_id, 
+                        text=f"{ai_summary}\n{ai_advice}",
+                        report_id=report_id 
+                    )
+                except Exception as e:
+                    print(f"[Slack Notification] 送信失敗: {e}")
 
         return json_data
 

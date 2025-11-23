@@ -10,6 +10,9 @@ DB_PATH = os.getenv("DB_PATH", "./smart_grow_system.db")
 # === Slack通知設定 ===
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 
+# === ダッシュボードURL ===
+DASHBOARD_URL = "http://100.91.171.58:8000"
+
 # === LLM関連設定 ===
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL_NAME = "gpt-4-turbo"  # 固定値（必要に応じて .env 化可）

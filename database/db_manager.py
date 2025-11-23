@@ -362,3 +362,16 @@ def update_ai_report(report_id: int, growth_rate: float, ai_summary: str, ai_adv
             SET growth_rate = ?, ai_summary = ?, ai_advice = ?, json_response = ?, last_updated = ?
             WHERE report_id = ?
         """, (growth_rate, ai_summary, ai_advice, json_response, datetime.now().isoformat(), report_id))
+        
+def update_ai_report_status(report_id: int, slack_sent: int = 1):
+    """
+    Slack通知の成功フラグを更新
+    """
+    with open_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE ai_reports
+            SET slack_sent = ?, last_updated = ?
+            WHERE report_id = ?
+        """, (slack_sent, datetime.now().isoformat(), report_id))
+        conn.commit()

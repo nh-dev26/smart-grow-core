@@ -17,7 +17,3 @@ def run_ai_report_job(report_id: int):
    
 
     print(f"[AI JOB] report_id {report_id} の解析結果をDBに保存しました。")
-
-    
-    #TODO: slack通知
-    
