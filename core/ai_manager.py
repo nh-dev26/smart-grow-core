@@ -8,7 +8,7 @@ from datetime import datetime
 from PIL import Image
 import json
 import re
-from database.db_manager import select_ai_report
+from database.db_manager import select_ai_report, update_ai_report
 from core.slack_manager import send_report_slack_notification
 
 if LLM_API_KEY:
@@ -74,7 +74,6 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
         # quick_action_type が指定されたが、上記に該当しない場合
         else:
              prompt += "\n---\n**【回答時の注意事項】**\n- Markdown形式で、通常のチャットとして応答してください。\n"
-             
     else:
         # quick_action_type が指定されていない場合は、通常のMarkdown応答を要求
         prompt += """**回答時の注意事項:**
@@ -204,7 +203,6 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
             json_data = {"summary": "", "advice": ""}
 
         if report_id is not None:
-            from database.db_manager import update_ai_report
             ai_summary = json_data.get("summary", "")
             ai_advice = json_data.get("advice", "")
             update_ai_report(report_id, growth_rate=0.0, ai_summary=ai_summary, ai_advice=ai_advice, json_response=str(json_data))
