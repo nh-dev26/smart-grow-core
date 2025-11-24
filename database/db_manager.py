@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from contextlib import contextmanager
 
-from config import * # DB_PATH, DEFAULT_LAYERS, DEFAULT_SCHEDULES, DEFAULT_SYSTEM_CONFIG をインポート
+from config import * 
 
 @contextmanager
 def open_db(db_path=None):
@@ -16,10 +16,8 @@ def open_db(db_path=None):
     conn = None
     try:
         conn = sqlite3.connect(db_path)
-        # カラム名でアクセスできるように設定
         conn.row_factory = sqlite3.Row
         yield conn
-        # 処理が成功した場合にコミット
         conn.commit()
         
     except sqlite3.Error as e:
@@ -28,14 +26,11 @@ def open_db(db_path=None):
         # with open("db_error.log", "a") as f:
         #     f.write(f"[{datetime.now()}] {e}\n")
         if conn:
-            # エラー発生時にロールバック
             conn.rollback()
-        # エラーを再送出
         raise
         
     finally:
         if conn:
-            # 接続を閉じる
             conn.close()
 
 def get_create_table_queries():
@@ -131,7 +126,6 @@ def init_db(db_path=DB_PATH):
     """
     データベースが存在しない場合に作成・初期化し、デフォルト値を挿入する。
     """
-    # 本番運用を想定し、意図しない再初期化を防止
     if os.environ.get("APP_ENV") == "production" and os.path.exists(db_path):
         print(f"本番環境のため、既存のDB {db_path} の初期化はスキップされました。")
         return

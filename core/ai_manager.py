@@ -11,7 +11,6 @@ import re
 from database.db_manager import select_ai_report
 from core.slack_manager import send_report_slack_notification
 
-# Gemini API の設定
 if LLM_API_KEY:
     genai.configure(api_key=LLM_API_KEY)
     gemini_model = genai.GenerativeModel("models/gemini-2.5-flash")
@@ -19,10 +18,6 @@ else:
     gemini_model = None
     print("Warning: LLM_API_KEY が設定されていません。AI機能は無効です。")
     
-# ai_manager.py
-
-# ... (既存の import, genai の設定は変更なし) ...
-
 def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
     """
     システムプロンプトを作成。クイックアクションの指示を含む。
@@ -35,7 +30,6 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
 """
     
     # センサーデータと画像情報 (常に共通)
-    # ------------------------------------------
     if sensor_data:
         prompt += "\n**現在のシステム情報:**\n"
         if 'temperature' in sensor_data and sensor_data['temperature'] is not None:
@@ -49,11 +43,8 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
     if image_filename:
         prompt += f"\n**添付画像:** {image_filename}\n"
         prompt += "画像を分析して、豆苗の成長状態、健康状態、問題点などを詳しく教えてください。\n"
-    # ------------------------------------------
-    
+   
     # クイックアクションごとの特別指示 (メインロジック)
-    # ------------------------------------------
-    
     if quick_action_type:
         # JSON出力を要求する場合の共通指示
         prompt += "\n---\n**【応答形式に関する特別厳命事項】**\n"
@@ -83,8 +74,7 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
         # quick_action_type が指定されたが、上記に該当しない場合
         else:
              prompt += "\n---\n**【回答時の注意事項】**\n- Markdown形式で、通常のチャットとして応答してください。\n"
-
-
+             
     else:
         # quick_action_type が指定されていない場合は、通常のMarkdown応答を要求
         prompt += """**回答時の注意事項:**
@@ -106,13 +96,13 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=Non
     if not gemini_model:
         raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
 
-    # 💡 修正点: quick_action_type を引数として渡す
     system_prompt = create_system_prompt(sensor_data, image_filename, quick_action_type) 
     
     image_data = None
     if image_filename and app_root_path:
         try:
             # web_appのルートパスを基準に画像パスを構築
+            #TODO:layer_idに応じたパスに変更する
             image_path = Path(app_root_path).parent / 'plant_images' / 'layer_1' / image_filename
             if image_path.exists():
                 with open(image_path, 'rb') as f:
@@ -145,12 +135,9 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=Non
             raise ConnectionError('APIの使用制限に達しました。しばらく待ってから再試行してください。')
         else:
             raise RuntimeError(f'AI処理中にエラーが発生しました: {error_msg}')
+    
         
-
-
-
-# 以下テスト実装
-
+# 以下AIレポート生成用関数
 def create_report_prompt_image_only(image_filename: str):
     """
     画像だけでAIレポートを作るプロンプト
@@ -216,7 +203,6 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
             print("[AI Report] JSON解析に失敗しました")
             json_data = {"summary": "", "advice": ""}
 
-        # report_id が指定されていればDB更新, Slack通知
         if report_id is not None:
             from database.db_manager import update_ai_report
             ai_summary = json_data.get("summary", "")

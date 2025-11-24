@@ -20,11 +20,11 @@ LLM_MODEL_NAME = "gpt-4-turbo"  # 固定値（必要に応じて .env 化可）
 # === デフォルトシステム設定 ===
 DEFAULT_SYSTEM_CONFIG = {
     "water_duration_sec": 10,
-    "slack_webhook_url": SLACK_WEBHOOK_URL,
+    "slack_webhook_url": "",
     "temp_high_threshold": 38.0,
     "temp_low_threshold": 10.0,
     "pump_gpio_sig": 17,
-    "dashboard_url": "http://your.funnel.url/dashboard",
+    "dashboard_url": DASHBOARD_URL,
     "i2c_bus_num": 1,
 
     # 水圧関連
@@ -34,7 +34,7 @@ DEFAULT_SYSTEM_CONFIG = {
     "drain_pressure_gpio_sig": 27,
 
     # LLM関連
-    "llm_api_key_enc": LLM_API_KEY,  # 暗号化前のキーを暫定で格納
+    "llm_api_key_enc": "",  
     "llm_model_name": LLM_MODEL_NAME,
 }
 

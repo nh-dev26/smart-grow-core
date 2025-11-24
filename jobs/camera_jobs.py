@@ -110,15 +110,14 @@ def execute_photo_job(layer_id: int):
         report_id = insert_initial_ai_report(layer_id, job_timestamp_str, image_full_path)
         
         if report_id:
-            # 取得した report_id を使って、AIジョブを即時実行するように登録
             scheduler.add_job(
                 run_ai_report_job,
                 trigger='date',
-                args=[report_id],
-                id=f'ai_report_{report_id}', # ジョブIDが一意になるように設定
+                args=[report_id, layer_id],
+                id=f'ai_report_{report_id}', 
                 name=f'AI Report for Layer {layer_id} - Image {report_id}',
-                replace_existing=True, # 万が一同じIDのジョブがあれば上書き
-                misfire_grace_time=300 # 5分以内の遅延なら実行を許可
+                replace_existing=True, 
+                misfire_grace_time=300 
             )
             print(f"[CAMERA JOB] AIレポートジョブ (ID: ai_report_{report_id}) をスケジュールに登録しました。")
 
