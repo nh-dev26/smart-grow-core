@@ -1,12 +1,6 @@
-# web_app/services.py
-
-import os
-import glob
-import io
-from pathlib import Path
 from datetime import datetime, timedelta
-from PIL import Image
-
+from core.ai_manager import process_ai_chat as core_process_ai_chat
+from core.file_manager import select_images as core_select_images
 from database.db_manager import (
     open_db,
     select_latest_sensor_data as db_select_latest_sensor_data,
@@ -15,8 +9,6 @@ from database.db_manager import (
     select_next_schedules as db_select_next_schedules,
     select_system_config
 )
-from core.ai_manager import process_ai_chat as core_process_ai_chat
-
 
 def select_dashboard_data(image_layer_id=1):
     """ダッシュボード用のデータを取得する"""
@@ -176,7 +168,6 @@ def update_system_config(data):
             cursor.execute(sql, values)
             return True
     except Exception as e:
-        # ロギング
         print(f"Error updating system config: {e}")
         return False
 
@@ -209,8 +200,6 @@ def update_single_system_config_key(key, value):
     
 def select_images(layer_id=1, limit=100):
     """画像一覧を取得する"""
-    # core パッケージの file_manager から関数をインポートして使用
-    from core.file_manager import select_images as core_select_images
     return core_select_images(layer_id, limit)
 
 def process_ai_chat(user_message, image_filename, sensor_data, app_root_path, quick_action_type=None):
@@ -220,7 +209,6 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path, qu
     コアのAI処理関数に引き渡す。
     """
     
-    # 💡 修正点: quick_action_type と app_root_path を引数として追加し、そのまま引き渡す
     return core_process_ai_chat(
         user_message, 
         image_filename, 

@@ -1,8 +1,5 @@
-# web_app/routes/ui_routes.py
-
 from flask import Blueprint, render_template, request, send_from_directory, current_app
 from pathlib import Path
-
 
 # Blueprintを定義。UIルートは通常、URLプレフィックスなし
 ui_bp = Blueprint('ui', __name__)

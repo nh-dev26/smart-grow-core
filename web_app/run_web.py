@@ -1,12 +1,8 @@
-# smart-grow-core/web_app/run_web.py
-
 from web_app import create_app
 
-# Gunicornがロードするインスタンス
-# コマンド例: gunicorn -w 1 run_web:app
+# 起動コマンド python -m web_app.run_web
 app = create_app()
 
 if __name__ == '__main__':
-    # 開発環境でのみ使用
     # 本番環境で実行するコードからは「必ず」denug = Falseに
     app.run(host='0.0.0.0', port=8000, debug=True)

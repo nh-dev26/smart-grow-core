@@ -162,20 +162,17 @@ def api_ai_chat():
         user_message = data.get('message', '')
         image_filename = data.get('image_filename')
         sensor_data = data.get('sensor_data', {})
-        # 💡 修正点 1: quick_action_type をリクエストボディから取得
         quick_action_type = data.get('quick_action_type', None) 
         
         if not user_message and not quick_action_type:
-            # ユーザーメッセージもクイック質問の指定もない場合はエラー
             return jsonify({'error': 'メッセージが空です'}), 400
-        
-        # 💡 修正点 2: services.process_ai_chat に quick_action_type を渡す
+
         ai_response = services.process_ai_chat(
             user_message, 
             image_filename, 
             sensor_data, 
             current_app.root_path,
-            quick_action_type  # 新しい引数
+            quick_action_type  
         )
         
         return jsonify({
@@ -206,12 +203,9 @@ THRESHOLD_KEYS = [
 INTEGRATION_KEYS = [
     "llm_model_name"
 ]
-# 個別リセット可能な全てのキーを統合
+
 ALL_CONFIG_KEYS = THRESHOLD_KEYS + INTEGRATION_KEYS 
 
-# ------------------------------------------
-# 1. 設定保存 API
-# ------------------------------------------
 
 @api_bp.route('/settings/thresholds', methods=['POST'])
 def update_thresholds():
@@ -219,10 +213,8 @@ def update_thresholds():
     try:
         data = request.get_json()
         
-        # 受け取ったデータから、THRESHOLD_KEYSに該当する項目のみを抽出
         update_data = {key: data[key] for key in THRESHOLD_KEYS if key in data}
         
-        # サービス層にDB更新を依頼
         if services.update_system_config(update_data):
             return jsonify({
                 "success": True, 
@@ -243,7 +235,6 @@ def update_integrations():
     try:
         data = request.get_json()
         
-        # 受け取ったデータから、INTEGRATION_KEYSに該当する項目のみを抽出
         update_data = {key: data[key] for key in INTEGRATION_KEYS if key in data}
         
         if services.update_system_config(update_data):
@@ -260,18 +251,12 @@ def update_integrations():
             "error": f"連携設定の保存中にエラーが発生しました: {str(e)}"
         }), 500
 
-# ------------------------------------------
-# 2. 全体リセット API
-# ------------------------------------------
-
 @api_bp.route('/settings/thresholds/reset', methods=['POST'])
 def reset_all_thresholds():
     """制御・閾値設定（全て）をデフォルト値にリセットする"""
     try:
-        # THRESHOLD_KEYS に該当する全てのキーとそのデフォルト値を取得
         reset_data = {key: DEFAULT_SYSTEM_CONFIG[key] for key in THRESHOLD_KEYS}
         
-        # サービス層にDB更新を依頼
         if services.update_system_config(reset_data):
             return jsonify({
                 "success": True, 
@@ -290,10 +275,8 @@ def reset_all_thresholds():
 def reset_all_integrations():
     """連携設定（全て）をデフォルト値にリセットする"""
     try:
-        # INTEGRATION_KEYS に該当する全てのキーとそのデフォルト値を取得
         reset_data = {key: DEFAULT_SYSTEM_CONFIG[key] for key in INTEGRATION_KEYS}
         
-        # サービス層にDB更新を依頼
         if services.update_system_config(reset_data):
             return jsonify({
                 "success": True, 
@@ -308,12 +291,6 @@ def reset_all_integrations():
             "error": f"連携設定の全体リセット中にエラーが発生しました: {str(e)}"
         }), 500
 
-# ------------------------------------------
-# 3. 個別リセット API
-# ------------------------------------------
-
-# 既存の @api_bp.route('/settings/reset', methods=['POST']) を以下の内容に置き換えます
-
 @api_bp.route('/settings/reset', methods=['POST'])
 def reset_single_setting():
     """
@@ -327,7 +304,6 @@ def reset_single_setting():
         if not target_key:
             return jsonify({"success": False, "error": "キー名 (key) が指定されていません。"}), 400
             
-        # ALL_CONFIG_KEYS を使用して、制御・閾値と連携設定のどちらもリセット可能にする
         if target_key not in ALL_CONFIG_KEYS: 
             return jsonify({"success": False, "error": f"キー '{target_key}' は設定項目として無効です。"}), 403
             
@@ -336,8 +312,6 @@ def reset_single_setting():
         if default_value is None:
             return jsonify({"success": False, "error": f"キー '{target_key}' のデフォルト値が見つかりません。"}), 400
             
-        # サービス関数を呼び出し、DBを更新
-        # 注: サービス関数の名前を services.update_single_system_config_key に修正して呼び出しています
         if services.update_single_system_config_key(target_key, default_value):
             return jsonify({
                 "success": True,

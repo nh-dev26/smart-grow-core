@@ -86,6 +86,88 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
     
     return prompt
 
+#簡版版テスト中
+# def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
+#     """
+#     軽量化・高速化したシステムプロンプト。
+#     """
+
+#     # --- 基本役割 ---
+#     prompt = "あなたは豆苗栽培の専門AIです。以下の情報を踏まえて最適な回答を返してください。\n"
+
+#     # --- センサー情報 ---
+#     if sensor_data:
+#         prompt += "\n【現在のシステム情報】\n"
+#         if sensor_data.get("temperature") is not None:
+#             prompt += f"- 温度: {sensor_data['temperature']}℃\n"
+#         if sensor_data.get("humidity") is not None:
+#             prompt += f"- 湿度: {sensor_data['humidity']}%\n"
+
+#     # --- 画像情報 ---
+#     if image_filename:
+#         prompt += f"\n【添付画像】{image_filename}\n画像を分析して成長状態や問題点を判断してください。\n"
+
+#     # --- クイックアクション（JSON専用応答） ---
+#     if quick_action_type:
+#         prompt += "\n【厳命：指定JSONのみ返す。説明・Markdown禁止】\n"
+
+#         if quick_action_type == "成長率分析":
+#             prompt += """
+# 以下のキーを持つJSONのみを返す：
+# {
+#  "analysis_type": "成長率分析",
+#  "growth_stage": "...",
+#  "color_rating": 数値1-5,
+#  "health_comment": "...",
+#  "recommendation": "..."
+# }
+# """
+
+#         elif quick_action_type == "収穫判断":
+#             prompt += """
+# 以下のキーを持つJSONのみを返す：
+# {
+#  "analysis_type": "収穫判断",
+#  "ready_for_harvest": true/false,
+#  "current_height_cm": 数値,
+#  "reason": "...",
+#  "suggested_date": "YYYY-MM-DD または N/A"
+# }
+# """
+
+#         elif quick_action_type == "病気診断":
+#             prompt += """
+# 以下のキーを持つJSONのみを返す：
+# {
+#  "analysis_type": "病気診断",
+#  "disease_status": "異常なし/軽度/緊急",
+#  "diagnosed_issue": "...",
+#  "severity": "low/medium/high",
+#  "treatment": "..."
+# }
+# """
+
+#         elif quick_action_type == "栽培アドバイス":
+#             prompt += """
+# 以下のキーを持つJSONのみを返す：
+# {
+#  "analysis_type": "栽培アドバイス",
+#  "main_topic": "...",
+#  "advice_detail": "...",
+#  "check_list": ["...", "..."]
+# }
+# """
+#         else:
+#             prompt += "通常のMarkdown応答で返してください。\n"
+
+#     # --- 通常応答モード ---
+#     else:
+#         prompt += "【応答形式】Markdownで簡潔に。必要に応じて絵文字可。\n"
+
+#     prompt += "\n---\n"
+#     return prompt
+
+
 
 def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=None, quick_action_type=None):
     """
@@ -184,6 +266,7 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
         with open(img_path, 'rb') as f:
             image_bytes = f.read()
         image_data = Image.open(io.BytesIO(image_bytes))
+        
     except Exception as e:
         print(f"[AI Report] 画像読み込みエラー: {e}")
         return None

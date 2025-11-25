@@ -38,7 +38,7 @@ def send_report_slack_notification(layer_id: int, text: str, report_id: int = No
                 layer_id=layer_id, 
                 log_level='ERROR', 
                 message='Slack notification delivery failed.',
-                details=f'Report ID {report_id}. HTTP Status: {response.status_code}, Response: "{response.text}"' # ⬅️ 詳細にステータスと応答を記録
+                details=f'Report ID {report_id}. HTTP Status: {response.status_code}, Response: "{response.text}"' 
             )
     except Exception as e:
         print(f"[Slack] 送信中に例外発生: {e}")
