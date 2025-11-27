@@ -3,6 +3,8 @@ let imagesByDate = {};
 let allChatImages = [];
 let selectedImageFilename = null;
 let tempSelectedImage = null;
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
 
 document.addEventListener('DOMContentLoaded', function () {
     const modalEl = document.getElementById('imageSelectModal');
@@ -118,24 +120,37 @@ async function loadImageList() {
 }
 
 function openImageSelectModal() {
-    renderModalCalendar();
-    if (imageSelectModal) imageSelectModal.show();
-}
-
-function renderModalCalendar() {
-    const container = document.getElementById('modal-calendar');
-    if (!container) return;
     const latestDate = (allChatImages.length > 0 && allChatImages[0].timestamp)
         ? new Date(allChatImages[0].timestamp)
         : new Date();
-    const year = latestDate.getFullYear();
-    const month = latestDate.getMonth();
 
-    let html = `<div class="text-center mb-2"><strong>${year}年${month+1}月</strong></div><div class="mini-calendar-grid">`;
+    currentYear = latestDate.getFullYear();
+    currentMonth = latestDate.getMonth();
+
+    renderModalCalendar(currentYear, currentMonth);
+    if (imageSelectModal) imageSelectModal.show();
+}
+
+// 【修正箇所】引数 year と month を受け取る
+function renderModalCalendar(year, month) {
+    const container = document.getElementById('modal-calendar');
+    if (!container) return;
+    
+    // 【変更部分】ヘッダーをボタン付きに修正
+    let html = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="goToPreviousMonth()">＜</button>
+            <strong>${year}年${month+1}月</strong>
+            <button class="btn btn-sm btn-outline-secondary" onclick="goToNextMonth()">＞</button>
+        </div>
+        <div class="mini-calendar-grid">`;
+    
+    // 曜日のヘッダー
     ['日','月','火','水','木','金','土'].forEach(day => {
         html += `<div class="mini-cal-header">${day}</div>`;
     });
 
+    // カレンダーの残りのロジックはほぼそのまま使用可能
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDay.getDay();
@@ -154,6 +169,7 @@ function renderModalCalendar() {
     html += `</div>`;
     container.innerHTML = html;
 
+    // ... （後略：日付選択のイベントリスナー設定ロジックはそのまま）
     container.querySelectorAll('.mini-cal-day').forEach(el=>{
         const date = el.getAttribute('data-date');
         if(!date) return;
@@ -170,6 +186,24 @@ function renderModalCalendar() {
     const confirmBtn = document.getElementById('confirm-select-btn');
     if(confirmBtn) confirmBtn.disabled=true;
     tempSelectedImage = null;
+}
+
+function goToPreviousMonth() {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    renderModalCalendar(currentYear, currentMonth);
+}
+
+function goToNextMonth() {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    renderModalCalendar(currentYear, currentMonth);
 }
 
 function selectDateInModal(dateStr, clickedEl) {
