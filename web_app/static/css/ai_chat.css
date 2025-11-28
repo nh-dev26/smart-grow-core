@@ -1,9 +1,3 @@
-/* ================================================== */
-/* AI Chat ページのスタイル (統合版) */
-/* ================================================== */
-
-/* --- 1. ミニカレンダー --- */
-
 .mini-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -36,8 +30,8 @@
 }
 
 .mini-cal-day.has-image {
-    background-color: #d1e7dd; /* Light Green */
-    border-color: #198754; /* Success Green */
+    background-color: #d1e7dd; 
+    border-color: #198754; 
     font-weight: 600;
     color: #198754;
 }
@@ -55,7 +49,7 @@
 }
 
 .mini-cal-day.today {
-    border: 2px solid #0dcaf0; /* Info Blue */
+    border: 2px solid #0dcaf0; 
 }
 
 .mini-cal-day:empty {
@@ -66,16 +60,12 @@
     background-color: transparent;
 }
 
-
-/* --- 2. チャットコンテナ/カード --- */
-
 .chat-card {
     height: 70vh;
     display: flex;
     flex-direction: column;
 }
 
-/* card-bodyが残りの高さを占有し、スクロールを子要素に任せる */
 .chat-card .card-body {
     flex: 1; 
     overflow: hidden; 
@@ -90,9 +80,6 @@
     background-color: #fff;
     scroll-behavior: smooth; 
 }
-
-
-/* --- 3. メッセージ基本スタイル --- */
 
 .message {
     display: flex;
@@ -120,13 +107,13 @@
 }
 
 .ai-message .message-avatar {
-    background-color: #198754; /* Success Green */
+    background-color: #198754; 
     color: white;
     margin-right: 0.75rem;
 }
 
 .user-message .message-avatar {
-    background-color: #0d6efd; /* Primary Blue */
+    background-color: #0d6efd; 
     color: white;
     margin-left: 0.75rem;
     order: 2;
@@ -147,7 +134,7 @@
 }
 
 .user-bubble {
-    background-color: #0d6efd; /* Primary Blue */
+    background-color: #0d6efd;
     color: white;
 }
 
@@ -159,32 +146,25 @@
     margin-bottom: 0;
 }
 
-
-/* --- 4. Markdown コンテンツ --- */
-
-/* Markdown全体に適用される設定（ai-messageの子要素にのみ影響） */
 .ai-message .message-content {
     word-break: break-word; 
 }
 
-/* h2 見出し */
 .ai-message .message-content h2 {
     font-size: 1.3rem;
     margin-top: 1.5rem; 
     margin-bottom: 0.75rem;
-    border-bottom: 2px solid #198754; /* Success Green */
+    border-bottom: 2px solid #198754; 
     padding-bottom: 0.3rem;
 }
 
-/* h3 見出し */
 .ai-message .message-content h3 {
     font-size: 1.1rem;
     margin-top: 1.2rem;
     margin-bottom: 0.5rem;
-    color: #198754; /* Success Green */
+    color: #198754; 
 }
 
-/* リストのマージン */
 .ai-message .message-content ul, .ai-message .message-content ol {
     margin-left: 1.5rem;
     margin-bottom: 0.75rem;
@@ -194,9 +174,8 @@
     margin-bottom: 0.3rem;
 }
 
-/* 引用ブロック (blockquote) の視覚的区別 */
 .ai-message .message-content blockquote {
-    border-left: 4px solid #0dcaf0; /* Info Blue */
+    border-left: 4px solid #0dcaf0; 
     padding-left: 15px;
     margin: 15px 0;
     color: #6c757d; 
@@ -207,19 +186,14 @@
     font-size: 0.95rem;
 }
 
-
-/* --- 5. コードブロックの改善 --- */
-
-/* インラインコード */
 .message-content code {
-    background-color: #f9f2f4; /* Light Pinkish background */
-    color: #c7254e; /* Darker Pink/Red text */
+    background-color: #f9f2f4; 
+    color: #c7254e; 
     padding: 0.2rem 0.4rem;
     border-radius: 3px;
     font-size: 0.9em;
 }
 
-/* コードブロック (pre) */
 .message-content pre {
     background-color: #f7f7f7; 
     padding: 1rem;
@@ -236,7 +210,6 @@
     color: inherit; 
 }
 
-/* テーブルの改善 */
 .ai-message .message-content table {
     width: 100%;
     border-collapse: collapse;
@@ -253,9 +226,6 @@
 .ai-message .message-content th {
     background-color: #f2f2f2;
 }
-
-
-/* --- 6. システムメッセージ --- */
 
 .system-message {
     display: flex;
@@ -299,10 +269,6 @@
     gap: 5px;
 }
 
-
-/* --- 7. その他のスタイル/アニメーション --- */
-
-/* チャット内の添付画像スタイル */
 .attached-image {
     max-width: 200px;
     max-height: 200px;
@@ -319,7 +285,6 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* アニメーション */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -331,7 +296,6 @@
     }
 }
 
-/* タイピングインジケーター */
 .typing-indicator {
     display: inline-block;
 }
@@ -363,24 +327,21 @@
     }
 }
 
-/* --- 8. レスポンシブ --- */
-
 @media (max-width: 768px) {
     .chat-card {
         height: 70vh;
     }
     
-    /* 窮屈さ解消のための調整 */
     .ai-message .message-avatar {
         margin-right: 0.5rem; 
     }
     .ai-message .message-bubble {
-        margin-left: -5px; /* アバターに近づけ、左のスペースを詰める */
+        margin-left: -5px; 
     }
     
     .message-bubble {
-        max-width: 95%; /* 90%から95%へ拡大 */
-        padding: 0.6rem 0.9rem; /* パディングを小さくする */
+        max-width: 95%; 
+        padding: 0.6rem 0.9rem;
     }
 
     .message-avatar {
@@ -399,7 +360,6 @@
         padding: 6px 2px;
     }
 
-    /* コンテンツ内部の縦方向の窮屈さを解消 */
     .ai-message .message-content h2,
     .ai-message .message-content h3 {
         margin-top: 1rem; 
@@ -420,7 +380,6 @@
         margin-bottom: 0.6rem; 
     }
     
-    /* クイック質問ボタンの二列配置（親要素は #quick-action-container を想定） */
     #quick-action-container {
         display: flex; 
         flex-wrap: wrap; 
@@ -438,11 +397,6 @@
         text-align: center;
     }
 }
-
-/* 以前の重複した media query と max-width: 400px の調整は削除 */
-
-
-/* --- 9. 入力エリアの調整 --- */
 
 .card-footer .d-flex {
     align-items: flex-end; 
@@ -465,4 +419,8 @@
     background-color: #fff !important; 
     backdrop-filter: none !important; 
     z-index: 999; 
+}
+
+.month-navigator{
+    text-align: center;
 }

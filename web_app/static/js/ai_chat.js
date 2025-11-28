@@ -131,26 +131,22 @@ function openImageSelectModal() {
     if (imageSelectModal) imageSelectModal.show();
 }
 
-// 【修正箇所】引数 year と month を受け取る
 function renderModalCalendar(year, month) {
     const container = document.getElementById('modal-calendar');
     if (!container) return;
     
-    // 【変更部分】ヘッダーをボタン付きに修正
     let html = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="month-navigator">
             <button class="btn btn-sm btn-outline-secondary" onclick="goToPreviousMonth()">＜</button>
             <strong>${year}年${month+1}月</strong>
             <button class="btn btn-sm btn-outline-secondary" onclick="goToNextMonth()">＞</button>
         </div>
         <div class="mini-calendar-grid">`;
     
-    // 曜日のヘッダー
     ['日','月','火','水','木','金','土'].forEach(day => {
         html += `<div class="mini-cal-header">${day}</div>`;
     });
 
-    // カレンダーの残りのロジックはほぼそのまま使用可能
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDay.getDay();
@@ -289,7 +285,6 @@ async function sendMessage(quickActionType=null){
     const sendBtn=document.getElementById('send-btn');
     if(sendBtn){
         sendBtn.disabled=true; 
-        // 修正: 送信ボタンをローディングアイコンのみにする
         sendBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
     }
 
@@ -326,7 +321,6 @@ async function sendMessage(quickActionType=null){
         addAIMessage('⚠️ **エラー**\n\n通信中にエラーが発生しました。');
     }finally{
         removeAttachedImage();
-        // 修正: 送信完了後、送信ボタンを飛行機アイコンのみに戻す
         if(sendBtn){sendBtn.disabled=false; sendBtn.innerHTML='<i class="fas fa-paper-plane"></i>';}
     }
 }
