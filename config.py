@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # === DB設定 ===
-DB_PATH = os.getenv("DB_PATH", "./smart_grow_system.db")
+DB_PATH = os.getenv("DB_PATH", "/home/pi/smart-grow-core/smart_grow_system.db")
 
 # === Slack通知設定 ===
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
