@@ -5,13 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # === DB設定 ===
-DB_PATH = os.getenv("DB_PATH", "/home/pi/smart-grow-core/smart_grow_system.db")
+DB_PATH = os.getenv("DB_PATH", "/home/yuya/smart-grow-core/smart_grow_system.db")
 
 # === Slack通知設定 ===
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 
 # === ダッシュボードURL ===
-DASHBOARD_URL = "http://100.91.171.58:8000"
+DASHBOARD_URL = "http://100.91.17.27:8000"
 
 # === LLM関連設定 ===
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")

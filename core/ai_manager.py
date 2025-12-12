@@ -1,7 +1,6 @@
 from config import LLM_API_KEY
-import google.generativeai as genai
-#最新バージョンの場合import文は以下のようになります
-#import google.genai as genai
+import google.genai as genai 
+#import google.generativeai as genai # <-- これは削除またはコメントアウト
 import io
 from pathlib import Path
 from datetime import datetime
@@ -12,12 +11,17 @@ from database.db_manager import select_ai_report, update_ai_report
 from core.slack_manager import send_report_slack_notification
 
 if LLM_API_KEY:
-    genai.configure(api_key=LLM_API_KEY)
-    gemini_model = genai.GenerativeModel("models/gemini-2.5-flash")
+    # 修正 2: configure() ではなく client を作成
+    client = genai.Client(api_key=LLM_API_KEY)
+
+    gemini_client = client
+    gemini_model_name = "models/gemini-2.5-flash" # モデル名を保持
 else:
-    gemini_model = None
+    gemini_client = None
+    gemini_model_name = None
     print("Warning: LLM_API_KEY が設定されていません。AI機能は無効です。")
-    
+
+
 def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
     """
     システムプロンプトを作成。クイックアクションの指示を含む。
@@ -38,12 +42,12 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
             prompt += f"- 湿度: {sensor_data['humidity']}%\n"
         # タンク圧力は chat-form で除外されている前提ですが、もしあれば含める
         # if 'supply_pressure' in sensor_data and sensor_data['supply_pressure']:
-        #     prompt += f"- 給水タンク圧力: {sensor_data['supply_pressure']} kPa\n"
+        #    prompt += f"- 給水タンク圧力: {sensor_data['supply_pressure']} kPa\n"
     
     if image_filename:
         prompt += f"\n**添付画像:** {image_filename}\n"
         prompt += "画像を分析して、豆苗の成長状態、健康状態、問題点などを詳しく教えてください。\n"
-   
+    
     # クイックアクションごとの特別指示 (メインロジック)
     if quick_action_type:
         # JSON出力を要求する場合の共通指示
@@ -73,7 +77,7 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
 
         # quick_action_type が指定されたが、上記に該当しない場合
         else:
-             prompt += "\n---\n**【回答時の注意事項】**\n- Markdown形式で、通常のチャットとして応答してください。\n"
+            prompt += "\n---\n**【回答時の注意事項】**\n- Markdown形式で、通常のチャットとして応答してください。\n"
     else:
         # quick_action_type が指定されていない場合は、通常のMarkdown応答を要求
         prompt += """**回答時の注意事項:**
@@ -86,95 +90,14 @@ def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
     
     return prompt
 
-#簡版版テスト中
-# def create_system_prompt(sensor_data, image_filename, quick_action_type=None):
-#     """
-#     軽量化・高速化したシステムプロンプト。
-#     """
-
-#     # --- 基本役割 ---
-#     prompt = "あなたは豆苗栽培の専門AIです。以下の情報を踏まえて最適な回答を返してください。\n"
-
-#     # --- センサー情報 ---
-#     if sensor_data:
-#         prompt += "\n【現在のシステム情報】\n"
-#         if sensor_data.get("temperature") is not None:
-#             prompt += f"- 温度: {sensor_data['temperature']}℃\n"
-#         if sensor_data.get("humidity") is not None:
-#             prompt += f"- 湿度: {sensor_data['humidity']}%\n"
-
-#     # --- 画像情報 ---
-#     if image_filename:
-#         prompt += f"\n【添付画像】{image_filename}\n画像を分析して成長状態や問題点を判断してください。\n"
-
-#     # --- クイックアクション（JSON専用応答） ---
-#     if quick_action_type:
-#         prompt += "\n【厳命：指定JSONのみ返す。説明・Markdown禁止】\n"
-
-#         if quick_action_type == "成長率分析":
-#             prompt += """
-# 以下のキーを持つJSONのみを返す：
-# {
-#  "analysis_type": "成長率分析",
-#  "growth_stage": "...",
-#  "color_rating": 数値1-5,
-#  "health_comment": "...",
-#  "recommendation": "..."
-# }
-# """
-
-#         elif quick_action_type == "収穫判断":
-#             prompt += """
-# 以下のキーを持つJSONのみを返す：
-# {
-#  "analysis_type": "収穫判断",
-#  "ready_for_harvest": true/false,
-#  "current_height_cm": 数値,
-#  "reason": "...",
-#  "suggested_date": "YYYY-MM-DD または N/A"
-# }
-# """
-
-#         elif quick_action_type == "病気診断":
-#             prompt += """
-# 以下のキーを持つJSONのみを返す：
-# {
-#  "analysis_type": "病気診断",
-#  "disease_status": "異常なし/軽度/緊急",
-#  "diagnosed_issue": "...",
-#  "severity": "low/medium/high",
-#  "treatment": "..."
-# }
-# """
-
-#         elif quick_action_type == "栽培アドバイス":
-#             prompt += """
-# 以下のキーを持つJSONのみを返す：
-# {
-#  "analysis_type": "栽培アドバイス",
-#  "main_topic": "...",
-#  "advice_detail": "...",
-#  "check_list": ["...", "..."]
-# }
-# """
-#         else:
-#             prompt += "通常のMarkdown応答で返してください。\n"
-
-#     # --- 通常応答モード ---
-#     else:
-#         prompt += "【応答形式】Markdownで簡潔に。必要に応じて絵文字可。\n"
-
-#     prompt += "\n---\n"
-#     return prompt
-
-
 
 def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=None, quick_action_type=None):
     """
     AIチャットの応答を取得する。
     クイックアクションが指定された場合は、それをプロンプト生成に反映させる。
     """
-    if not gemini_model:
+    # 修正 1: gemini_model -> gemini_client
+    if not gemini_client:
         raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
 
     system_prompt = create_system_prompt(sensor_data, image_filename, quick_action_type) 
@@ -197,10 +120,18 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=Non
     try:
         if image_data:
             print(f"[AI Chat] 画像付きリクエスト: {user_message[:50]}...")
-            response = gemini_model.generate_content([system_prompt + "\n\n" + user_message, image_data])
+            # 修正 2A: API呼び出しを client.models.generate_content に変更
+            response = gemini_client.models.generate_content(
+                model=gemini_model_name, 
+                contents=[system_prompt + "\n\n" + user_message, image_data]
+            )
         else:
             print(f"[AI Chat] テキストリクエスト: {user_message[:50]}...")
-            response = gemini_model.generate_content(system_prompt + "\n\n" + user_message)
+            # 修正 2B: API呼び出しを client.models.generate_content に変更
+            response = gemini_client.models.generate_content(
+                model=gemini_model_name,
+                contents=system_prompt + "\n\n" + user_message
+            )
         
         ai_response = response.text
         print(f"[AI Chat] レスポンス受信: {len(ai_response)}文字")
@@ -216,7 +147,7 @@ def process_ai_chat(user_message, image_filename, sensor_data, app_root_path=Non
             raise ConnectionError('APIの使用制限に達しました。しばらく待ってから再試行してください。')
         else:
             raise RuntimeError(f'AI処理中にエラーが発生しました: {error_msg}')
-    
+
         
 # 以下AIレポート生成用関数
 def create_report_prompt_image_only(image_filename: str):
@@ -254,7 +185,8 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
     画像を渡してAIレポートを取得し、必要であればDBに保存する。
     report_id が指定されていれば保存も行う。
     """
-    if not gemini_model:
+    # 修正 3A: gemini_model -> gemini_client
+    if not gemini_client:
         raise ConnectionError('AI機能が無効です。LLM_API_KEYを設定してください。')
 
     img_path = Path(image_path)
@@ -274,7 +206,11 @@ def generate_ai_report_from_image(image_path: str, report_id: int = None):
     prompt = create_report_prompt_image_only(img_path.name)
 
     try:
-        response = gemini_model.generate_content([prompt, image_data])
+        # 修正 3B: API呼び出しを client.models.generate_content に変更
+        response = gemini_client.models.generate_content(
+            model=gemini_model_name,
+            contents=[prompt, image_data]
+        )
         ai_text = response.text
         print(f"[AI Report] レスポンス受信: {len(ai_text)}文字")
         
