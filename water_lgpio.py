@@ -11,7 +11,7 @@ lgpio.gpio_claim_output(h, PUMP_PIN, 0)
 
 print("�|���v ON�i5�b�j")
 lgpio.gpio_write(h, PUMP_PIN, 1)  # LOW = ON
-time.sleep(5)
+time.sleep(10)
 
 print("�|���v OFF")
 lgpio.gpio_write(h, PUMP_PIN, 0)  # HIGH = OFF
