@@ -361,7 +361,7 @@ function toggleView(view) {
 // タイムラインのレンダリング
 function renderTimeline() {
     const timelineContainer = document.getElementById('timeline-view');
-    timelineContainer.innerHTML = '<div class="timeline"></div>'; // Reset
+    timelineContainer.innerHTML = '<div class="timeline"></div>'; // 初期化
     const timeline = timelineContainer.querySelector('.timeline');
 
     if (allImages.length === 0) {
@@ -390,27 +390,24 @@ function renderTimeline() {
             <div class="timeline-icon">
                 <i class="fas fa-camera"></i>
             </div>
-            <div class="card border-0 shadow-sm">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white custom-timeline-header">
                     <strong>${date}</strong>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <img src="/${firstImage.image_path}" class="img-fluid rounded" style="cursor: pointer;" onclick="openModal('${firstImage.date}')">
-                        </div>
-                        <div class="col-md-8" id="report-${firstImage.date}">
-                            <p class="text-muted">AI解析レポートを読み込み中...</p>
-                        </div>
+                <div class="card-body text-center">
+                    <div class="timeline-image-wrapper">
+                        <img src="/${firstImage.image_path}" 
+                             class="img-fluid rounded shadow-sm" 
+                             style="cursor: pointer; max-height: 450px;" 
+                             onclick="openModal('${firstImage.date}')">
                     </div>
                 </div>
             </div>
         `;
         timeline.appendChild(timelineItem);
-        fetchAIReportForTimeline(firstImage.image_path, `report-${firstImage.date}`);
+        // AIレポートのフェッチ処理
     }
 }
-
 // タイムライン用のAIレポート取得
 function fetchAIReportForTimeline(imagePath, elementId) {
     const reportContainer = document.getElementById(elementId);
