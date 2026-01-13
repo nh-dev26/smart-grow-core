@@ -2,6 +2,7 @@ import time
 import errno
 import random
 import platform
+import requests
 
 # --- smbus2を安全にインポート ---
 try:
@@ -105,3 +106,16 @@ def read_drain_pressure() -> float | None:
     排水タンクの水圧/水位を読み取るダミー関数。
     """
     return read_pressure_sensor("Drain")
+
+
+
+def get_water_level_api_data() -> dict | None:
+    """APIを叩いてレスポンスの辞書をそのまま返す"""
+    url = "http://100.76.34.82:5000/water-level"
+    try:
+        response = requests.get(url, timeout=3.0)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"API Request Error: {e}")
+        return None
