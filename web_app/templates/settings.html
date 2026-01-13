@@ -66,29 +66,29 @@
                         </div>
                         <hr>
 
-                        <h6 class="text-secondary mt-4 mb-3">水圧閾値</h6>
+                        <h6 class="text-secondary mt-4 mb-3">タンク全高設定</h6>
                         <div class="row mb-3">
                             
                                <div class="col-md-6">
-                                <label for="drain_high_threshold" class="form-label">給水高圧閾値</label>
+                                <label for="drain_high_threshold" class="form-label">給水タンク全高</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="drain_high_threshold" step="1" required>
                                     <button type="button" class="btn btn-outline-secondary" onclick="handleSingleReset('drain_high_threshold')">
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </div>
-                                <div class="form-text mt-1">この値を超えると給水タンクの警告を発します (kPa)。</div>
+                                <div class="form-text mt-1">給水タンクの全高を設定してください (mm)。</div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="supply_low_threshold" class="form-label">排水低下閾値</label>
+                                <label for="supply_low_threshold" class="form-label">排水タンク全高</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="supply_low_threshold" step="1" required>
                                     <button type="button" class="btn btn-outline-secondary" onclick="handleSingleReset('supply_low_threshold')">
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </div>
-                                <div class="form-text mt-1">この値未満で排水タンクの警告を発します (kPa)。</div>
+                                <div class="form-text mt-1">排水タンクの全高を設定してください (mm)。</div>
                             </div>
                             
                          

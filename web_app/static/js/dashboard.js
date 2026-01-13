@@ -70,11 +70,11 @@ function updateSupplyTank(pressure, threshold) {
     const progressElement = document.getElementById('supply-progress');
     const statusElement = document.getElementById('supply-status');
 
-    valueElement.textContent = `${pressure} kPa`;
+    valueElement.textContent = `${pressure} %`;
 
     // プログレスバー（70-110 kPaの範囲を0-100%にマップ）
-    const minPressure = 70;
-    const maxPressure = 110;
+    const minPressure = 0;
+    const maxPressure = 100;
     const percentage = Math.max(0, Math.min(100, ((pressure - minPressure) / (maxPressure - minPressure)) * 100));
     progressElement.style.width = `${percentage}%`;
 
@@ -97,11 +97,11 @@ function updateDrainTank(pressure, threshold) {
     const progressElement = document.getElementById('drain-progress');
     const statusElement = document.getElementById('drain-status');
 
-    valueElement.textContent = `${pressure} kPa`;
+    valueElement.textContent = `${pressure} %`;
 
     // プログレスバー（80-160 kPaの範囲を0-100%にマップ）
-    const minPressure = 80;
-    const maxPressure = 160;
+    const minPressure = 0;
+    const maxPressure = 100;
     const percentage = Math.max(0, Math.min(100, ((pressure - minPressure) / (maxPressure - minPressure)) * 100));
     progressElement.style.width = `${percentage}%`;
 
