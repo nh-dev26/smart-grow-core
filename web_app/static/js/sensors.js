@@ -160,7 +160,7 @@ function updateSupplyTank(pressure, threshold) {
     const progressElement = document.getElementById('supply-progress');
     const alertElement = document.getElementById('supply-alert');
     
-    valueElement.textContent = `${pressure} kPa`;
+    valueElement.textContent = `${pressure} %`;
     
     // プログレスバー（70-110 kPaの範囲を0-100%にマップ）
     const minPressure = 70;
@@ -172,15 +172,15 @@ function updateSupplyTank(pressure, threshold) {
     if (pressure < threshold) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
         alertElement.className = 'alert alert-danger mb-0';
-        alertElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>警告:</strong> 水圧が低下しています。給水が必要です！';
+        alertElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>警告:</strong> 残量が低下しています。給水が必要です！';
     } else if (pressure < threshold + 5) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
         alertElement.className = 'alert alert-warning mb-0';
-        alertElement.innerHTML = '<i class="fas fa-exclamation-circle"></i> <strong>注意:</strong> 水圧がやや低下しています。';
+        alertElement.innerHTML = '<i class="fas fa-exclamation-circle"></i> <strong>注意:</strong> 残量がやや低下しています。';
     } else {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
         alertElement.className = 'alert alert-success mb-0';
-        alertElement.innerHTML = '<i class="fas fa-check-circle"></i> <strong>正常:</strong> 水圧は適正範囲内です。';
+        alertElement.innerHTML = '<i class="fas fa-check-circle"></i> <strong>正常:</strong> 残量は適正範囲内です。';
     }
 }
 
@@ -190,7 +190,7 @@ function updateDrainTank(pressure, threshold) {
     const progressElement = document.getElementById('drain-progress');
     const alertElement = document.getElementById('drain-alert');
     
-    valueElement.textContent = `${pressure} kPa`;
+    valueElement.textContent = `${pressure} %`;
     
     // プログレスバー（80-160 kPaの範囲を0-100%にマップ）
     const minPressure = 80;
@@ -202,15 +202,15 @@ function updateDrainTank(pressure, threshold) {
     if (pressure > threshold) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
         alertElement.className = 'alert alert-danger mb-0';
-        alertElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>警告:</strong> 水圧が高すぎます。排水が必要です！';
+        alertElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>警告:</strong> 残量が高すぎます。排水が必要です！';
     } else if (pressure > threshold - 10) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
         alertElement.className = 'alert alert-warning mb-0';
-        alertElement.innerHTML = '<i class="fas fa-exclamation-circle"></i> <strong>注意:</strong> 水圧がやや高くなっています。';
+        alertElement.innerHTML = '<i class="fas fa-exclamation-circle"></i> <strong>注意:</strong> 残量がやや高くなっています。';
     } else {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
         alertElement.className = 'alert alert-success mb-0';
-        alertElement.innerHTML = '<i class="fas fa-check-circle"></i> <strong>正常:</strong> 水圧は適正範囲内です。';
+        alertElement.innerHTML = '<i class="fas fa-check-circle"></i> <strong>正常:</strong> 残量は適正範囲内です。';
     }
 }
 

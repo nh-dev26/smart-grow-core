@@ -49,7 +49,7 @@ function updateSensorCards(sensorData) {
 
     // 給水タンク（視覚的表示）
     if (sensorData.supply_pressure !== null) {
-        updateSupplyTank(sensorData.supply_pressure, 90.0);
+        updateSupplyTank(sensorData.supply_pressure, 20.0);
     } else {
         document.getElementById('supply-value').innerHTML = '<small class="text-muted">N/A</small>';
         document.getElementById('supply-status').innerHTML = '<small class="text-muted">データなし</small>';
@@ -57,7 +57,7 @@ function updateSensorCards(sensorData) {
 
     // 排水タンク（視覚的表示）
     if (sensorData.drain_pressure !== null) {
-        updateDrainTank(sensorData.drain_pressure, 150.0);
+        updateDrainTank(sensorData.drain_pressure, 80.0);
     } else {
         document.getElementById('drain-value').innerHTML = '<small class="text-muted">N/A</small>';
         document.getElementById('drain-status').innerHTML = '<small class="text-muted">データなし</small>';
@@ -66,9 +66,11 @@ function updateSensorCards(sensorData) {
 
 // 給水タンク更新
 function updateSupplyTank(pressure, threshold) {
+
     const valueElement = document.getElementById('supply-value');
     const progressElement = document.getElementById('supply-progress');
     const statusElement = document.getElementById('supply-status');
+   
 
     valueElement.textContent = `${pressure} %`;
 
@@ -81,7 +83,7 @@ function updateSupplyTank(pressure, threshold) {
     // 色とステータス
     if (pressure < threshold) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
-        statusElement.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> 水圧低下</small>';
+        statusElement.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> 水位低下</small>';
     } else if (pressure < threshold + 5) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
         statusElement.innerHTML = '<small class="text-warning"><i class="fas fa-exclamation-circle"></i> やや低下</small>';
@@ -93,6 +95,7 @@ function updateSupplyTank(pressure, threshold) {
 
 // 排水タンク更新
 function updateDrainTank(pressure, threshold) {
+  
     const valueElement = document.getElementById('drain-value');
     const progressElement = document.getElementById('drain-progress');
     const statusElement = document.getElementById('drain-status');
@@ -108,7 +111,7 @@ function updateDrainTank(pressure, threshold) {
     // 色とステータス
     if (pressure > threshold) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
-        statusElement.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> 水圧高</small>';
+        statusElement.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> 水位高</small>';
     } else if (pressure > threshold - 10) {
         progressElement.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
         statusElement.innerHTML = '<small class="text-warning"><i class="fas fa-exclamation-circle"></i> やや高</small>';
